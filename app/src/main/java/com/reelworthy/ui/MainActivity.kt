@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
         chatViewModel = ChatViewModel(com.reelworthy.BuildConfig.YOUTUBE_API_KEY, db.videoDao(), settingsRepository)
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("679260739905-e699h3i2ns0vrgreomau1s0b364fbq2l.apps.googleusercontent.com")
+            .requestIdToken(getString(com.reelworthy.R.string.default_web_client_id))
             .requestEmail()
             .requestScopes(com.google.android.gms.common.api.Scope("https://www.googleapis.com/auth/youtube.readonly"))
             .build()

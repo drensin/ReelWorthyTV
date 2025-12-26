@@ -69,18 +69,31 @@ class SyncWorker(
 
             // 3. Sync each playlist
             var successCount = 0
+            val allValidVideoIds = mutableSetOf<String>()
+            
             selectedPlaylistIds.forEach { playlistId ->
                 try {
                     Log.d("SyncWorker", "Syncing playlist: $playlistId")
-                    videoRepo.fetchPlaylistVideos(
+                    val ids = videoRepo.fetchPlaylistVideos(
                         playlistId = playlistId,
                         accessToken = accessToken,
                         apiKey = apiKey
                     )
+                    allValidVideoIds.addAll(ids)
                     successCount++
                 } catch (e: Exception) {
                     Log.e("SyncWorker", "Failed to sync playlist $playlistId", e)
                 }
+            }
+
+            // 4. Garbage Collection
+            // Only run cleanup if ALL selected playlists synced successfully.
+            // This prevents accidental deletion if a partial network failure occurs (e.g. one playlist fails).
+            if (successCount == selectedPlaylistIds.size && allValidVideoIds.isNotEmpty()) {
+                Log.d("SyncWorker", "All playlists synced. Cleaning up deselected/removed videos...")
+                videoRepo.deleteLocalVideosNotIn(allValidVideoIds.toList())
+            } else {
+                 Log.w("SyncWorker", "Skipping cleanup. Success: $successCount/${selectedPlaylistIds.size}. Videos: ${allValidVideoIds.size}")
             }
 
             Log.d("SyncWorker", "Sync complete. Successfully synced $successCount/${selectedPlaylistIds.size} playlists.")

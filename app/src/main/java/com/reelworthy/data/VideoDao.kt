@@ -53,4 +53,13 @@ interface VideoDao {
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylists(playlists: List<PlaylistEntity>)
+
+    /**
+     * Deletes all videos whose IDs are NOT in the provided list.
+     * Use this for garbage collection after a full sync.
+     *
+     * @param ids The list of valid video IDs to KEEP.
+     */
+    @Query("DELETE FROM videos WHERE id NOT IN (:ids)")
+    suspend fun deleteVideosNotIn(ids: List<String>)
 }

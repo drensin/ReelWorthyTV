@@ -88,7 +88,7 @@ class VideoRepository(private val videoDao: VideoDao) {
      * @param accessToken Optional OAuth token (for private playlists).
      * @param apiKey The API Key.
      */
-    suspend fun fetchPlaylistVideos(playlistId: String, accessToken: String?, apiKey: String) {
+    suspend fun fetchPlaylistVideos(playlistId: String, accessToken: String?, apiKey: String): List<String> {
         try {
             val authHeader = if (accessToken != null) "Bearer $accessToken" else null
             
@@ -159,9 +159,23 @@ class VideoRepository(private val videoDao: VideoDao) {
                 Log.d("VideoRepository", "Inserted $totalFetched videos (with durations) from playlist $playlistId")
             }
             
+            return accumulatedVideos.map { it.id }
+            
         } catch (e: Exception) {
             Log.e("VideoRepository", "Error fetching playlist items", e)
             throw e // Rethrow to let ViewModel generic handler (or specific UI handler) know
+        }
+    }
+
+    /**
+     * Deletes all local videos that are NOT in the provided list of IDs.
+     */
+    suspend fun deleteLocalVideosNotIn(ids: List<String>) {
+        if (ids.isNotEmpty()) {
+            videoDao.deleteVideosNotIn(ids)
+            Log.d("VideoRepository", "Garbage collection: Retained ${ids.size} videos. Others deleted.")
+        } else {
+             Log.w("VideoRepository", "Garbage collection requested with EMPTY list. Skipping to avoid wiping database.")
         }
     }
     
