@@ -10,6 +10,7 @@ import com.reelworthy.data.VideoEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -54,7 +55,8 @@ data class RecommendedVideo(
 class ChatViewModel(
     private val apiKey: String,
     private val videoDao: VideoDao,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val searchHistoryRepository: com.reelworthy.data.SearchHistoryRepository
 ) : ViewModel() {
 
     private val repository = ChatRepository(apiKey, videoDao, settingsRepository)
@@ -71,19 +73,32 @@ class ChatViewModel(
     private val _currentStreamingText = MutableStateFlow("")
     val currentStreamingText: StateFlow<String> = _currentStreamingText.asStateFlow()
 
+    // Search History Flow
+    val searchHistory = searchHistoryRepository.recentSearches.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     /**
      * Sends a user query to the AI and processes the streaming response.
      *
-     * 1. Adds user message to the list immediately.
-     * 2. Sets loading state and clears streaming text.
-     * 3. Collects the flow from [ChatRepository.getRecommendations].
-     * 4. Updates [currentStreamingText] in real-time.
-     * 5. Upon completion, hydrates video IDs to full entities and triggers the final AI message.
+     * 1. Add query to history.
+     * 2. Adds user message to the list immediately.
+     * 3. Sets loading state and clears streaming text.
+     * 4. Collects the flow from [ChatRepository.getRecommendations].
+     * 5. Updates [currentStreamingText] in real-time.
+     * 6. Upon completion, hydrates video IDs to full entities and triggers the final AI message.
      *
      * @param text The user's query string.
      */
     fun sendMessage(text: String) {
         if (text.isBlank()) return
+
+        // Add to history
+        viewModelScope.launch {
+            searchHistoryRepository.addSearch(text)
+        }
 
         val userMsg = ChatMessage(text = text, isUser = true)
         _messages.value = _messages.value + userMsg
@@ -141,6 +156,15 @@ class ChatViewModel(
                 _isLoading.value = false
                 _currentStreamingText.value = ""
             }
+        }
+    }
+
+    /**
+     * Deletes a search item from history.
+     */
+    fun deleteSearchHistoryItem(query: String) {
+        viewModelScope.launch {
+            searchHistoryRepository.deleteSearch(query)
         }
     }
 }

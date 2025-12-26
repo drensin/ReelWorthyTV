@@ -10,12 +10,17 @@ import androidx.room.RoomDatabase
  *
  * Defines the database configuration and serves as the main access point to the persisted data.
  */
-@Database(entities = [VideoEntity::class, PlaylistEntity::class], version = 1)
+@Database(entities = [VideoEntity::class, PlaylistEntity::class, SearchHistoryEntity::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     /**
      * Provides the DAO for video-related operations.
      */
     abstract fun videoDao(): VideoDao
+
+    /**
+     * Provides the DAO for search history operations.
+     */
+    abstract fun searchHistoryDao(): SearchHistoryDao
 
     companion object {
         @Volatile
@@ -33,7 +38,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "reelworthy_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

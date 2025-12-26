@@ -3,7 +3,7 @@
 This package contains all components related to the User Interface, built primarily with **Jetpack Compose for TV**.
 
 ## Screens
-*   **`DashboardScreen`**: The main application screen. Displays the "Concierge" interface, chat input, and recommended video carousel.
+*   **`DashboardScreen`**: The main application screen. Displays the "Concierge" interface, chat input, recommended video carousel, and the **Search History Modal** (for recalling past queries).
 *   **`SettingsScreen`**: A dialog-based settings interface for configuring AI models, selecting playlists, and toggling the "Recent from Subscriptions" feed.
 
 ## ViewModels

@@ -4,6 +4,8 @@ import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
+import com.google.ai.client.generativeai.type.RequestOptions
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -56,11 +58,13 @@ class ChatRepository(
     /**
      * Generates recommendations for a user query.
      *
+     *
      * This method:
-     * 1. Reads the current AI Settings.
+     * 1. Reads the current AI Settings (Model, Deep Thinking Mode).
      * 2. Dumps the entire local video database into a JSON context string.
-     * 3. Streams the AI response, masking the raw JSON output from the user.
-     * 4. Parses the final JSON block into [AiRecommendation] objects.
+     * 3. Sends a prompt to Gemini with a massive 180s (3-minute) timeout to allow for "Deep Thinking" over large contexts.
+     * 4. Streams the AI response, masking the raw JSON output from the user until completion.
+     * 5. Parses the final JSON block into [AiRecommendation] objects.
      *
      * @param userQuery The user's search query (e.g., "Show me something funny").
      * @return A Flow of [ChatStreamUpdate] chunks.
@@ -71,15 +75,15 @@ class ChatRepository(
         val aiModelName = settings.aiModel
         val deepThinking = settings.isDeepThinkingEnabled
         
-        Log.d("ChatRepository", "Using Model: $aiModelName, DeepThinking: $deepThinking")
+        Log.d("ChatRepository", "Using Model: \$aiModelName, DeepThinking: \$deepThinking")
 
         val generativeModel = GenerativeModel(
             modelName = aiModelName, 
             apiKey = apiKey,
             generationConfig = generationConfig {
                 temperature = if (deepThinking) 0.7f else 0.4f
-                // responseMimeType = "application/json" // REMOVED to allow thinking text
-            }
+            },
+            requestOptions = RequestOptions(timeout = 180.seconds)
         )
 
         // 1. Fetch Context

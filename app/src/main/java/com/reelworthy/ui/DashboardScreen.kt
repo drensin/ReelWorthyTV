@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +29,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -90,9 +95,11 @@ fun DashboardScreen(
 ) {
     val messages by chatViewModel.messages.collectAsState()
     val isLoading by chatViewModel.isLoading.collectAsState()
-    val streamingText by chatViewModel.currentStreamingText.collectAsState() // New streaming state
-    
+    val streamingText by chatViewModel.currentStreamingText.collectAsState()
+    val searchHistory by chatViewModel.searchHistory.collectAsState()
+
     var showSearchInput by remember { mutableStateOf(false) }
+    var showHistoryModal by remember { mutableStateOf(false) }
     var inputText by remember { mutableStateOf("") }
     
     // Focus Requesters
@@ -106,7 +113,7 @@ fun DashboardScreen(
         }
     }
     
-    // Auto-focus logic for Results (When loading finishes and we have results)
+    // Auto-focus logic for Results
     LaunchedEffect(isLoading) {
         if (!isLoading && messages.lastOrNull()?.recommendations?.isNotEmpty() == true) {
             carouselFocusRequester.requestFocus()
@@ -114,9 +121,6 @@ fun DashboardScreen(
     }
     
     val lastAiMessage = messages.lastOrNull { !it.isUser }
-    // If loading, use streaming text. Otherwise use last message text.
-    // Note: While loading, messages list hasn't been updated yet, so lastAiMessage is the OLD one.
-    // We only rely on streamingText for the overlay.
     val recommendations = lastAiMessage?.recommendations ?: emptyList()
 
     // Immersive Background Gradient
@@ -167,7 +171,7 @@ fun DashboardScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 2. Recommendations Carousel
+                // 2. Recommendations Carousel OR Text Response
                 if (recommendations.isNotEmpty()) {
                     Text(
                         text = "${recommendations.size} RECOMMENDATIONS FOUND FOR YOU",
@@ -193,8 +197,6 @@ fun DashboardScreen(
                                         android.content.Intent.ACTION_VIEW,
                                         android.net.Uri.parse("https://www.youtube.com/watch?v=$videoId")
                                     )
-                                    // Verify intent resolves to avoid crash? 
-                                    // On TV it likely will, but good practice.
                                     try {
                                         context.startActivity(intent)
                                     } catch (e: Exception) {
@@ -203,6 +205,27 @@ fun DashboardScreen(
                                 }
                             )
                         }
+                    }
+                } else if (lastAiMessage != null && !isLoading) {
+                    // AI responded, but no videos found (or error)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize().padding(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = lastAiMessage.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                     }
                 } else if (!isLoading) {
                     // Empty / Welcome State
@@ -256,7 +279,7 @@ fun DashboardScreen(
                         })
                     )
                 } else {
-                     // Quick Prompts + Search Icon
+                     // Quick Prompts + Search Icon + History Icon
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -267,6 +290,13 @@ fun DashboardScreen(
                              contentDescription = "Search",
                              onClick = { showSearchInput = true }
                          )
+
+                         // History Trigger
+                        FocusableIcon(
+                            icon = androidx.compose.material.icons.Icons.Default.History, // Better than Refresh
+                            contentDescription = "History",
+                            onClick = { showHistoryModal = true }
+                        )
                         
                         // Prompts
                         val prompts = listOf("Something funny", "Coding tutorials", "Music", "Surprise me")
@@ -290,8 +320,201 @@ fun DashboardScreen(
         ) {
             ThinkingModal(statusText = streamingText)
         }
+
+        // Search History Modal
+        if (showHistoryModal) {
+            Dialog(onDismissRequest = { showHistoryModal = false }) {
+                SearchHistoryModal(
+                    history = searchHistory,
+                    onClose = { showHistoryModal = false },
+                    onSelectQuery = { query ->
+                        chatViewModel.sendMessage(query)
+                        showHistoryModal = false
+                    },
+                    onDeleteQuery = { query ->
+                        chatViewModel.deleteSearchHistoryItem(query)
+                    }
+                )
+            }
+        }
     }
 }
+
+/**
+ * A modal dialog that displays user's search history.
+ * Supports click to select and long-press (Center Button) to delete.
+ */
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun SearchHistoryModal(
+    history: List<com.reelworthy.data.SearchHistoryEntity>,
+    onClose: () -> Unit,
+    onSelectQuery: (String) -> Unit,
+    onDeleteQuery: (String) -> Unit
+) {
+     Box(
+        modifier = Modifier
+            .fillMaxWidth(0.8f) // Adjusted for Dialog container
+            .fillMaxHeight(0.8f)
+            .background(Color(0xFF1E1E1E), RoundedCornerShape(16.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+            .padding(32.dp)
+    ) {
+        Column {
+            Text(
+                text = "Search History",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White
+            )
+            Text(
+                text = "Hold Center Button to delete an item.",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (history.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No recent searches.", color = Color.Gray)
+                }
+            } else {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(history) { item ->
+                        HistoryItem(
+                            query = item.query,
+                            onSelect = { onSelectQuery(item.query) },
+                            onDelete = { onDeleteQuery(item.query) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Close Button Top-Right
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+                Icon(Icons.Default.ExitToApp, contentDescription = "Close", tint = Color.White) 
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun HistoryItem(
+    query: String,
+    onSelect: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        // Prevent accidental click from the "Long Press Release" event
+        var isInputReady by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(500) // Buffer for key release
+            isInputReady = true
+        }
+
+        // Nested Dialog for Delete Confirmation
+        Dialog(onDismissRequest = { showDeleteDialog = false }) {
+                Box(
+                modifier = Modifier
+                    .background(Color(0xFF2B2B2B), RoundedCornerShape(8.dp))
+                    .padding(24.dp)
+            ) {
+                Column {
+                    Text("Delete this search?", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                    Text("\"$query\"", style = MaterialTheme.typography.bodyMedium, color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                        Button(onClick = { if (isInputReady) showDeleteDialog = false }) { Text("Cancel") }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Button(
+                            onClick = { 
+                                if (isInputReady) {
+                                    onDelete() 
+                                    showDeleteDialog = false 
+                                }
+                            },
+                            colors = androidx.tv.material3.ButtonDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            )
+                        ) { Text("Delete") }
+                    }
+                }
+            }
+        }
+    }
+
+    FocusableScaleWrapper(
+        onClick = onSelect,
+        onLongClick = { showDeleteDialog = true },
+        modifier = Modifier.fillMaxWidth()
+    ) { isFocused ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    if (isFocused) Color(0xFF333333) else Color(0xFF252525),
+                    RoundedCornerShape(8.dp)
+                )
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = androidx.compose.material.icons.Icons.Default.History,
+                contentDescription = null,
+                tint = if (isFocused) Color.White else Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Marquee Logic: Loop with speed adjustment
+            val scrollState = rememberScrollState()
+            LaunchedEffect(isFocused) {
+               if (isFocused) {
+                   kotlinx.coroutines.delay(1000) // Initial delay to read start
+                   while (true) {
+                       val maxScroll = scrollState.maxValue
+                       if (maxScroll > 0) {
+                           // Calculate duration based on width. ~30 pixels per second sounds readable.
+                           // Ensure a minimum duration of 2 seconds.
+                           val duration = (maxScroll * 20).coerceAtLeast(2000)
+                           
+                           scrollState.animateScrollTo(
+                               value = maxScroll, 
+                               animationSpec = androidx.compose.animation.core.tween(
+                                   durationMillis = duration, 
+                                   easing = androidx.compose.animation.core.LinearEasing
+                               )
+                           )
+                           kotlinx.coroutines.delay(2000) // Pause at end
+                           scrollState.scrollTo(0) // Snap back
+                           kotlinx.coroutines.delay(2000) // Pause at start
+                       } else {
+                           break // Content fits, no scroll needed
+                       }
+                   }
+               } else {
+                   scrollState.scrollTo(0)
+               }
+            }
+
+            Text(
+                text = query,
+                maxLines = 1,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isFocused) Color.White else Color.LightGray,
+                modifier = Modifier.horizontalScroll(scrollState)
+            )
+        }
+    }
+}
+
 
 /**
  * A modal dialog that appears while the AI is thinking.

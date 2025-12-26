@@ -119,6 +119,9 @@ This package handles all data operations. It is the "Truth".
 *   **`RetrofitClient.kt`**: Configures the connection to YouTube and Gemini.
 *   **`ChatRepository.kt`**: The logic for talking to Gemini. It constructs the prompt and parses the JSON response.
 *   **`VideoRepository.kt`**: Hides the complexity of data sources. Handles logic parity with the web app (e.g. fetching subscriptions, sorting, filtering Shorts).
+*   **`SearchHistoryRepository.kt`**: Manages the user's search history.
+    *   **`SearchHistoryEntity.kt`**: Defines the table for storing queries (timestamped).
+    *   **`SearchHistoryDao.kt`**: Handles FIFO logic (deleting oldest when > 50) and looking up recent queries.
 
 ### B. `com.reelworthy.ui` (The Paint)
 This package handles what the user sees.

@@ -107,8 +107,10 @@ class MainActivity : ComponentActivity() {
         // I need to update ChatRepository FIRST.
         // But for this edit, I will just setup the UI.
         
-        // TODO: Update ChatViewModel to use Settings
-        chatViewModel = ChatViewModel(com.reelworthy.BuildConfig.YOUTUBE_API_KEY, db.videoDao(), settingsRepository)
+        val searchHistoryDao = db.searchHistoryDao()
+        val searchHistoryRepository = com.reelworthy.data.SearchHistoryRepository(searchHistoryDao)
+
+        chatViewModel = ChatViewModel(com.reelworthy.BuildConfig.YOUTUBE_API_KEY, db.videoDao(), settingsRepository, searchHistoryRepository)
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(com.reelworthy.R.string.default_web_client_id))
