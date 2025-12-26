@@ -67,9 +67,10 @@ We don't dump all code into one file. We separate concerns:
 *   **What it is**: A type-safe HTTP client for Android.
 *   **Why**: It turns an HTTP API (like `GET /videos?id=123`) into a simple Kotlin interface function: `suspend fun getVideo(id: String): Video`.
 
-### G. AI: Google Gemini API
+### G. AI: Google Gemini API (via Retrofit)
 *   **What it is**: A multimodal generative AI model.
-*   **Context Window**: We use Gemini because it has a huge context window, allowing us to pass *your entire playlist* (titles and descriptions) in a single prompt so it can reason over the whole collection.
+*   **Integration**: We use a direct **Retrofit** integration (REST API) instead of the Java SDK. This ensures full compatibility with Android TV (avoiding Apache HttpClient conflicts) and allows for fine-grained control over streaming responses and "Thinking" model configurations.
+*   **Context Window**: We use Gemini because it has a huge context window, allowing us to pass *your entire playlist* in a single prompt.
 
 ---
 
@@ -117,7 +118,7 @@ This package handles all data operations. It is the "Truth".
 *   **`VideoDao.kt`**: "Data Access Object". Contains SQL queries like `SELECT * FROM videos WHERE id = :id`.
 *   **`VideoEntity.kt`**: Defines the table structure (columns) for videos.
 *   **`RetrofitClient.kt`**: Configures the connection to YouTube and Gemini.
-*   **`ChatRepository.kt`**: The logic for talking to Gemini. It constructs the prompt and parses the JSON response.
+*   **`ChatRepository.kt`**: The logic for talking to Gemini using a dedicated Retrofit service (`GeminiService`). It manages manual JSON payload construction, executes the streaming API call, and parses the SSE (Server-Sent Events) response to extract "thinking" and "text" chunks.
 *   **`VideoRepository.kt`**: Hides the complexity of data sources. Handles logic parity with the web app (e.g. fetching subscriptions, sorting, filtering Shorts).
 *   **`SearchHistoryRepository.kt`**: Manages the user's search history.
     *   **`SearchHistoryEntity.kt`**: Defines the table for storing queries (timestamped).

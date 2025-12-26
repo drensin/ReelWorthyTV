@@ -21,6 +21,13 @@ android {
         buildConfigField("String", "YOUTUBE_API_KEY", "\"${getApiKey()}\"")
     }
 
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -90,10 +97,13 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Generative AI
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    // Firebase Vertex AI
+    // Generative AI
+    // Google Gen AI SDK (Java/Kotlin) - REMOVED due to Apache HttpClient conflict on Android
+    // implementation("com.google.genai:google-genai:0.2.0")
 
     // Firebase (BoM)
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     

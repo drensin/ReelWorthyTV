@@ -5,7 +5,7 @@ This package contains the data management logic for the application, following t
 ## Repositories
 Repositories are the source of truth for data.
 *   **`VideoRepository`**: Manages video data. Handles fetching from YouTube API (Playlists & Subscriptions), ensuring parity with legacy web logic (e.g., Short filtering), and caching in `VideoDao`.
-*   **`ChatRepository`**: Manages interactions with the Generative AI (Gemini) API.
+*   **`ChatRepository`**: Manages interactions with the Generative AI (Gemini) API via direct REST calls. Handles manual JSON payload construction and SSE streaming.
 *   **`SettingsRepository`**: Manages user preferences (API Keys, selected playlists, Subscription Feed toggle) using `DataStore`.
 *   **`AuthRepository`**: Wraps Firebase Authentication and Google Sign-In logic.
 
@@ -18,7 +18,8 @@ Repositories are the source of truth for data.
 ## Network (Retrofit)
 *   **`RetrofitClient`**: Singleton that provides API service instances.
 *   **`YouTubeApiService`**: Interface for YouTube Data API v3 endpoints.
-*   **`GeminiApiService`**: Interface for Gemini/Generative Language API.
+*   **`GeminiApiService`**: Interface for Gemini/Generative Language API metadata (e.g. Models).
+*   **`GeminiService`**: (See `GeminiService.kt`) A dedicated Retrofit interface for the streaming Chat API, located in `ChatRepository`.
 
 ## Models
 *   **`models/`**: Contains Data Transfer Objects (DTOs) for parsing JSON responses.
