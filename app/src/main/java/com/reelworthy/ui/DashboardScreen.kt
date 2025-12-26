@@ -5,8 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +18,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -29,12 +29,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -50,25 +47,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.window.Dialog
-import kotlinx.coroutines.launch
 import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import com.reelworthy.data.VideoEntity
 
 /**
  * The primary screen of the ReelWorthy TV application.
@@ -88,10 +77,10 @@ import com.reelworthy.data.VideoEntity
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    userDisplayName: String?,
-    chatViewModel: ChatViewModel,
-    onOpenSettings: () -> Unit,
-    onSignOut: () -> Unit
+        userDisplayName: String?,
+        chatViewModel: ChatViewModel,
+        onOpenSettings: () -> Unit,
+        onSignOut: () -> Unit
 ) {
     val messages by chatViewModel.messages.collectAsState()
     val isLoading by chatViewModel.isLoading.collectAsState()
@@ -101,148 +90,160 @@ fun DashboardScreen(
     var showSearchInput by remember { mutableStateOf(false) }
     var showHistoryModal by remember { mutableStateOf(false) }
     var inputText by remember { mutableStateOf("") }
-    
+
     // Focus Requesters
     val searchFocusRequester = remember { FocusRequester() }
     val carouselFocusRequester = remember { FocusRequester() }
-    
+
     // Auto-focus logic for Search
     LaunchedEffect(showSearchInput) {
         if (showSearchInput) {
             searchFocusRequester.requestFocus()
         }
     }
-    
+
     // Auto-focus logic for Results
     LaunchedEffect(isLoading) {
         if (!isLoading && messages.lastOrNull()?.recommendations?.isNotEmpty() == true) {
             carouselFocusRequester.requestFocus()
         }
     }
-    
+
     val lastAiMessage = messages.lastOrNull { !it.isUser }
     val recommendations = lastAiMessage?.recommendations ?: emptyList()
 
     // Immersive Background Gradient
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A1A1A), // Dark Grey Top
-                        Color.Black,       // Black Center
-                        Color(0xFF0D1117)  // Deep Blue/Black Bottom
-                    )
-                )
-            )
+            modifier =
+                    Modifier.fillMaxSize()
+                            .background(
+                                    brush =
+                                            Brush.verticalGradient(
+                                                    colors =
+                                                            listOf(
+                                                                    Color(
+                                                                            0xFF1A1A1A
+                                                                    ), // Dark Grey Top
+                                                                    Color.Black, // Black Center
+                                                                    Color(
+                                                                            0xFF0D1117
+                                                                    ) // Deep Blue/Black Bottom
+                                                            )
+                                            )
+                            )
     ) {
         // Main Content Layer
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             // Top Bar (Icons)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
             ) {
-                 FocusableIcon(
-                    icon = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    onClick = onOpenSettings
+                FocusableIcon(
+                        icon = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        onClick = onOpenSettings
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 FocusableIcon(
-                    icon = Icons.Default.ExitToApp,
-                    contentDescription = "Sign Out",
-                    onClick = onSignOut
+                        icon = Icons.Default.ExitToApp,
+                        contentDescription = "Sign Out",
+                        onClick = onSignOut
                 )
             }
 
             // Center Area (Recommendations OR Welcome)
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 32.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 2. Recommendations Carousel OR Text Response
                 if (recommendations.isNotEmpty()) {
                     Text(
-                        text = "${recommendations.size} RECOMMENDATIONS FOUND FOR YOU",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp),
-                        color = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.align(Alignment.Start)
+                            text = "${recommendations.size} RECOMMENDATIONS FOUND FOR YOU",
+                            style =
+                                    MaterialTheme.typography.labelSmall.copy(
+                                            letterSpacing = 1.5.sp
+                                    ),
+                            color = Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.align(Alignment.Start)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(24.dp),
-                        contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp), 
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f) // Fill available vertical space in the parent Column
-                            .focusRequester(carouselFocusRequester)
+                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                            contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
+                            modifier =
+                                    Modifier.fillMaxWidth()
+                                            .weight(
+                                                    1f
+                                            ) // Fill available vertical space in the parent Column
+                                            .focusRequester(carouselFocusRequester)
                     ) {
                         items(recommendations) { rec ->
                             val context = androidx.compose.ui.platform.LocalContext.current
                             DashboardVideoCard(
-                                rec = rec,
-                                onPlayClick = { videoId ->
-                                    val intent = android.content.Intent(
-                                        android.content.Intent.ACTION_VIEW,
-                                        android.net.Uri.parse("https://www.youtube.com/watch?v=$videoId")
-                                    )
-                                    try {
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("DashboardScreen", "Error launching video", e)
+                                    rec = rec,
+                                    onPlayClick = { videoId ->
+                                        val intent =
+                                                android.content.Intent(
+                                                        android.content.Intent.ACTION_VIEW,
+                                                        android.net.Uri.parse(
+                                                                "https://www.youtube.com/watch?v=$videoId"
+                                                        )
+                                                )
+                                        try {
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            android.util.Log.e(
+                                                    "DashboardScreen",
+                                                    "Error launching video",
+                                                    e
+                                            )
+                                        }
                                     }
-                                }
                             )
                         }
                     }
                 } else if (lastAiMessage != null && !isLoading) {
                     // AI responded, but no videos found (or error)
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxSize().padding(32.dp)
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxSize().padding(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(48.dp)
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = lastAiMessage.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                text = lastAiMessage.text,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                 } else if (!isLoading) {
                     // Empty / Welcome State
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Welcome back, $userDisplayName",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontWeight = FontWeight.Thin,
-                                letterSpacing = 1.sp
-                            ),
-                            color = Color.White.copy(alpha = 0.9f)
+                                text = "Welcome back, $userDisplayName",
+                                style =
+                                        MaterialTheme.typography.headlineLarge.copy(
+                                                fontWeight = FontWeight.Thin,
+                                                letterSpacing = 1.sp
+                                        ),
+                                color = Color.White.copy(alpha = 0.9f)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "What would you like to watch today?",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.5f)
+                                text = "What would you like to watch today?",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White.copy(alpha = 0.5f)
                         )
                     }
                 }
@@ -250,90 +251,101 @@ fun DashboardScreen(
 
             // Bottom Bar (Search & Chips)
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 56.dp, vertical = 32.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 56.dp, vertical = 32.dp)
             ) {
-                 if (showSearchInput) {
-                     androidx.compose.material3.TextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        placeholder = { androidx.compose.material3.Text("Search...") },
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .focusRequester(searchFocusRequester)
-                            .border(1.dp, Color.White.copy(alpha=0.3f), RoundedCornerShape(8.dp)),
-                        colors = androidx.compose.material3.TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Black.copy(alpha=0.8f),
-                            unfocusedContainerColor = Color.Black.copy(alpha=0.5f),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            if (inputText.isNotBlank()) {
-                                chatViewModel.sendMessage(inputText)
-                                inputText = ""
-                                showSearchInput = false
-                            }
-                        })
+                if (showSearchInput) {
+                    androidx.compose.material3.TextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            placeholder = { androidx.compose.material3.Text("Search...") },
+                            modifier =
+                                    Modifier.fillMaxWidth(0.6f)
+                                            .focusRequester(searchFocusRequester)
+                                            .border(
+                                                    1.dp,
+                                                    Color.White.copy(alpha = 0.3f),
+                                                    RoundedCornerShape(8.dp)
+                                            ),
+                            colors =
+                                    androidx.compose.material3.TextFieldDefaults.colors(
+                                            focusedContainerColor = Color.Black.copy(alpha = 0.8f),
+                                            unfocusedContainerColor =
+                                                    Color.Black.copy(alpha = 0.5f),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                    ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions =
+                                    KeyboardActions(
+                                            onSearch = {
+                                                if (inputText.isNotBlank()) {
+                                                    chatViewModel.sendMessage(inputText)
+                                                    inputText = ""
+                                                    showSearchInput = false
+                                                }
+                                            }
+                                    )
                     )
                 } else {
-                     // Quick Prompts + Search Icon + History Icon
+                    // Quick Prompts + Search Icon + History Icon
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Search Trigger
-                         FocusableIcon(
-                             icon = Icons.Default.Search,
-                             contentDescription = "Search",
-                             onClick = { showSearchInput = true }
-                         )
-
-                         // History Trigger
                         FocusableIcon(
-                            icon = androidx.compose.material.icons.Icons.Default.History, // Better than Refresh
-                            contentDescription = "History",
-                            onClick = { showHistoryModal = true }
+                                icon = Icons.Default.Search,
+                                contentDescription = "Search",
+                                onClick = { showSearchInput = true }
                         )
-                        
+
+                        // History Trigger
+                        FocusableIcon(
+                                icon =
+                                        androidx.compose.material.icons.Icons.Default
+                                                .History, // Better than Refresh
+                                contentDescription = "History",
+                                onClick = { showHistoryModal = true }
+                        )
+
                         // Prompts
-                        val prompts = listOf("Something funny", "Coding tutorials", "Music", "Surprise me")
+                        val prompts =
+                                listOf(
+                                        "Something funny",
+                                        "Coding tutorials",
+                                        "Music",
+                                        "Surprise me"
+                                )
                         prompts.forEach { prompt ->
                             FocusableChip(
-                                text = prompt,
-                                onClick = { chatViewModel.sendMessage(prompt) }
+                                    text = prompt,
+                                    onClick = { chatViewModel.sendMessage(prompt) }
                             )
                         }
                     }
                 }
             }
         }
-        
+
         // Modal Overlay (Thinking)
         AnimatedVisibility(
-            visible = isLoading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-            ThinkingModal(statusText = streamingText)
-        }
+                visible = isLoading,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.align(Alignment.Center)
+        ) { ThinkingModal(statusText = streamingText) }
 
         // Search History Modal
         if (showHistoryModal) {
             Dialog(onDismissRequest = { showHistoryModal = false }) {
                 SearchHistoryModal(
-                    history = searchHistory,
-                    onClose = { showHistoryModal = false },
-                    onSelectQuery = { query ->
-                        chatViewModel.sendMessage(query)
-                        showHistoryModal = false
-                    },
-                    onDeleteQuery = { query ->
-                        chatViewModel.deleteSearchHistoryItem(query)
-                    }
+                        history = searchHistory,
+                        onClose = { showHistoryModal = false },
+                        onSelectQuery = { query ->
+                            chatViewModel.sendMessage(query)
+                            showHistoryModal = false
+                        },
+                        onDeleteQuery = { query -> chatViewModel.deleteSearchHistoryItem(query) }
                 )
             }
         }
@@ -341,51 +353,51 @@ fun DashboardScreen(
 }
 
 /**
- * A modal dialog that displays user's search history.
- * Supports click to select and long-press (Center Button) to delete.
+ * A modal dialog that displays user's search history. Supports click to select and long-press
+ * (Center Button) to delete.
  */
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun SearchHistoryModal(
-    history: List<com.reelworthy.data.SearchHistoryEntity>,
-    onClose: () -> Unit,
-    onSelectQuery: (String) -> Unit,
-    onDeleteQuery: (String) -> Unit
+        history: List<com.reelworthy.data.SearchHistoryEntity>,
+        onClose: () -> Unit,
+        onSelectQuery: (String) -> Unit,
+        onDeleteQuery: (String) -> Unit
 ) {
-     Box(
-        modifier = Modifier
-            .fillMaxWidth(0.8f) // Adjusted for Dialog container
-            .fillMaxHeight(0.8f)
-            .background(Color(0xFF1E1E1E), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-            .padding(32.dp)
+    Box(
+            modifier =
+                    Modifier.fillMaxWidth(0.8f) // Adjusted for Dialog container
+                            .fillMaxHeight(0.8f)
+                            .background(Color(0xFF1E1E1E), RoundedCornerShape(16.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                            .padding(32.dp)
     ) {
         Column {
             Text(
-                text = "Search History",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.White
+                    text = "Search History",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White
             )
             Text(
-                text = "Hold Center Button to delete an item.",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
+                    text = "Hold Center Button to delete an item.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             if (history.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No recent searches.", color = Color.Gray)
+                    Text("No recent searches.", color = Color.Gray)
                 }
             } else {
                 androidx.compose.foundation.lazy.LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(history) { item ->
                         HistoryItem(
-                            query = item.query,
-                            onSelect = { onSelectQuery(item.query) },
-                            onDelete = { onDeleteQuery(item.query) }
+                                query = item.query,
+                                onSelect = { onSelectQuery(item.query) },
+                                onDelete = { onDeleteQuery(item.query) }
                         )
                     }
                 }
@@ -393,22 +405,15 @@ fun SearchHistoryModal(
         }
 
         // Close Button Top-Right
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = "Close", tint = Color.White) 
+        IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd)) {
+            Icon(Icons.Default.ExitToApp, contentDescription = "Close", tint = Color.White)
         }
     }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun HistoryItem(
-    query: String,
-    onSelect: () -> Unit,
-    onDelete: () -> Unit
-) {
+fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -421,28 +426,42 @@ fun HistoryItem(
 
         // Nested Dialog for Delete Confirmation
         Dialog(onDismissRequest = { showDeleteDialog = false }) {
-                Box(
-                modifier = Modifier
-                    .background(Color(0xFF2B2B2B), RoundedCornerShape(8.dp))
-                    .padding(24.dp)
+            Box(
+                    modifier =
+                            Modifier.background(Color(0xFF2B2B2B), RoundedCornerShape(8.dp))
+                                    .padding(24.dp)
             ) {
                 Column {
-                    Text("Delete this search?", style = MaterialTheme.typography.titleMedium, color = Color.White)
-                    Text("\"$query\"", style = MaterialTheme.typography.bodyMedium, color = Color.LightGray)
+                    Text(
+                            "Delete this search?",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                    )
+                    Text(
+                            "\"$query\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.LightGray
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                        Button(onClick = { if (isInputReady) showDeleteDialog = false }) { Text("Cancel") }
+                    Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Button(onClick = { if (isInputReady) showDeleteDialog = false }) {
+                            Text("Cancel")
+                        }
                         Spacer(modifier = Modifier.width(16.dp))
                         Button(
-                            onClick = { 
-                                if (isInputReady) {
-                                    onDelete() 
-                                    showDeleteDialog = false 
-                                }
-                            },
-                            colors = androidx.tv.material3.ButtonDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            )
+                                onClick = {
+                                    if (isInputReady) {
+                                        onDelete()
+                                        showDeleteDialog = false
+                                    }
+                                },
+                                colors =
+                                        androidx.tv.material3.ButtonDefaults.colors(
+                                                containerColor = MaterialTheme.colorScheme.error
+                                        )
                         ) { Text("Delete") }
                     }
                 }
@@ -451,74 +470,77 @@ fun HistoryItem(
     }
 
     FocusableScaleWrapper(
-        onClick = onSelect,
-        onLongClick = { showDeleteDialog = true },
-        modifier = Modifier.fillMaxWidth()
+            onClick = onSelect,
+            onLongClick = { showDeleteDialog = true },
+            modifier = Modifier.fillMaxWidth()
     ) { isFocused ->
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    if (isFocused) Color(0xFF333333) else Color(0xFF252525),
-                    RoundedCornerShape(8.dp)
-                )
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                modifier =
+                        Modifier.fillMaxWidth()
+                                .background(
+                                        if (isFocused) Color(0xFF333333) else Color(0xFF252525),
+                                        RoundedCornerShape(8.dp)
+                                )
+                                .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.History,
-                contentDescription = null,
-                tint = if (isFocused) Color.White else Color.Gray,
-                modifier = Modifier.size(20.dp)
+                    imageVector = androidx.compose.material.icons.Icons.Default.History,
+                    contentDescription = null,
+                    tint = if (isFocused) Color.White else Color.Gray,
+                    modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             // Marquee Logic: Loop with speed adjustment
             val scrollState = rememberScrollState()
             LaunchedEffect(isFocused) {
-               if (isFocused) {
-                   kotlinx.coroutines.delay(1000) // Initial delay to read start
-                   while (true) {
-                       val maxScroll = scrollState.maxValue
-                       if (maxScroll > 0) {
-                           // Calculate duration based on width. ~30 pixels per second sounds readable.
-                           // Ensure a minimum duration of 2 seconds.
-                           val duration = (maxScroll * 20).coerceAtLeast(2000)
-                           
-                           scrollState.animateScrollTo(
-                               value = maxScroll, 
-                               animationSpec = androidx.compose.animation.core.tween(
-                                   durationMillis = duration, 
-                                   easing = androidx.compose.animation.core.LinearEasing
-                               )
-                           )
-                           kotlinx.coroutines.delay(2000) // Pause at end
-                           scrollState.scrollTo(0) // Snap back
-                           kotlinx.coroutines.delay(2000) // Pause at start
-                       } else {
-                           break // Content fits, no scroll needed
-                       }
-                   }
-               } else {
-                   scrollState.scrollTo(0)
-               }
+                if (isFocused) {
+                    kotlinx.coroutines.delay(1000) // Initial delay to read start
+                    while (true) {
+                        val maxScroll = scrollState.maxValue
+                        if (maxScroll > 0) {
+                            // Calculate duration based on width. ~30 pixels per second sounds
+                            // readable.
+                            // Ensure a minimum duration of 2 seconds.
+                            val duration = (maxScroll * 20).coerceAtLeast(2000)
+
+                            scrollState.animateScrollTo(
+                                    value = maxScroll,
+                                    animationSpec =
+                                            androidx.compose.animation.core.tween(
+                                                    durationMillis = duration,
+                                                    easing =
+                                                            androidx.compose.animation.core
+                                                                    .LinearEasing
+                                            )
+                            )
+                            kotlinx.coroutines.delay(2000) // Pause at end
+                            scrollState.scrollTo(0) // Snap back
+                            kotlinx.coroutines.delay(2000) // Pause at start
+                        } else {
+                            break // Content fits, no scroll needed
+                        }
+                    }
+                } else {
+                    scrollState.scrollTo(0)
+                }
             }
 
             Text(
-                text = query,
-                maxLines = 1,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isFocused) Color.White else Color.LightGray,
-                modifier = Modifier.horizontalScroll(scrollState)
+                    text = query,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isFocused) Color.White else Color.LightGray,
+                    modifier = Modifier.horizontalScroll(scrollState)
             )
         }
     }
 }
 
-
 /**
- * A modal dialog that appears while the AI is thinking.
- * It streams the "consciousness" of the AI to the user to reduce perceived latency.
+ * A modal dialog that appears while the AI is thinking. It streams the "consciousness" of the AI to
+ * the user to reduce perceived latency.
  *
  * @param statusText The real-time text stream from the AI (thinking process).
  */
@@ -526,59 +548,79 @@ fun HistoryItem(
 @Composable
 fun ThinkingModal(statusText: String) {
     Box(
-        modifier = Modifier
-            .fillMaxSize() // Cover full screen to capture focus/clicks? Or just overlay visual.
-            .background(Color.Black.copy(alpha = 0.8f))
-            .focusable(false), // Pass through focus? No, we want to block interaction
-        contentAlignment = Alignment.Center
+            modifier =
+                    Modifier.fillMaxSize() // Cover full screen to capture focus/clicks? Or just
+                            // overlay visual.
+                            .background(Color.Black.copy(alpha = 0.8f))
+                            .focusable(
+                                    false
+                            ), // Pass through focus? No, we want to block interaction
+            contentAlignment = Alignment.Center
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .fillMaxHeight(0.7f)
-                .background(
-                    color = Color(0xFF1E1E1E),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.3f), Color.Transparent)),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(48.dp)
+                modifier =
+                        Modifier.fillMaxWidth(0.7f)
+                                .fillMaxHeight(0.7f)
+                                .background(
+                                        color = Color(0xFF1E1E1E),
+                                        shape = RoundedCornerShape(24.dp)
+                                )
+                                .border(
+                                        width = 1.dp,
+                                        brush =
+                                                Brush.verticalGradient(
+                                                        listOf(
+                                                                Color.White.copy(alpha = 0.3f),
+                                                                Color.Transparent
+                                                        )
+                                                ),
+                                        shape = RoundedCornerShape(24.dp)
+                                )
+                                .padding(48.dp)
         ) {
             Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
             ) {
                 // CircularProgressIndicator removed for cleaner UI
                 Text(
-                    text = "Consulting the AI...",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                        text = "Consulting the AI...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White.copy(alpha = 0.7f)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 // Streaming Text
                 val scrollState = rememberScrollState()
-                
-                // OPTIMIZATION: Use scrollTo instead of animateScrollTo for streaming text
-                // ensuring rapid updates don't lag behind animations.
-                LaunchedEffect(statusText) {
-                    scrollState.scrollTo(scrollState.maxValue)
+
+                // Teleprompter Logic: Continuous smooth scroll
+                // This decouples the scroll position from the network speed, ensuring a readable
+                // pace.
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        val current = scrollState.value
+                        val max = scrollState.maxValue
+
+                        if (current < max) {
+                            // Scroll speed: ~2 pixels per frame (at 60fps)
+                            // This provides a smooth "movie computer" feel
+                            scrollState.scrollTo(current + 2)
+                        }
+
+                        // Wait for next frame (approx 16ms for 60fps)
+                        kotlinx.coroutines.delay(16)
+                    }
                 }
-                
+
                 Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Light,
-                        lineHeight = 28.sp
-                    ),
-                    color = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(scrollState)
+                        text = statusText,
+                        style =
+                                MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.Light,
+                                        lineHeight = 28.sp
+                                ),
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(scrollState)
                 )
             }
         }
@@ -598,91 +640,93 @@ fun ThinkingModal(statusText: String) {
  */
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun DashboardVideoCard(
-    rec: RecommendedVideo,
-    onPlayClick: (String) -> Unit
-) {
-    val durationText = remember(rec.video.duration) {
-        com.reelworthy.util.TimeUtils.formatIsoDuration(rec.video.duration)
-    }
+fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
+    val durationText =
+            remember(rec.video.duration) {
+                com.reelworthy.util.TimeUtils.formatIsoDuration(rec.video.duration)
+            }
 
     FocusableScaleWrapper(
-        onClick = { onPlayClick(rec.video.id) },
-        modifier = Modifier
-            .width(320.dp) // Increased width
-            .fillMaxHeight() // Fill the LazyRow's height (which fills parent weight)
-    ) { isFocused ->
+            onClick = { onPlayClick(rec.video.id) },
+            modifier =
+                    Modifier.width(320.dp) // Increased width
+                            .fillMaxHeight() // Fill the LazyRow's height (which fills parent
+            // weight)
+            ) { isFocused ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (isFocused) Color(0xFF2A2A2A) else Color(0xFF1A1A1A)
-                )
+                modifier =
+                        Modifier.fillMaxSize()
+                                .background(if (isFocused) Color(0xFF2A2A2A) else Color(0xFF1A1A1A))
         ) {
-             // Thumbnail Container with Duration Overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.5f)
-            ) {
+            // Thumbnail Container with Duration Overlay
+            Box(modifier = Modifier.fillMaxWidth().weight(0.5f)) {
                 AsyncImage(
-                    model = rec.video.thumbnailUrl,
-                    contentDescription = rec.video.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Gray) 
+                        model = rec.video.thumbnailUrl,
+                        contentDescription = rec.video.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().background(Color.Gray)
                 )
-                
+
                 // Duration Badge
                 if (durationText != null) {
                     Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                            modifier =
+                                    Modifier.align(Alignment.TopEnd)
+                                            .padding(8.dp)
+                                            .background(
+                                                    Color.Black.copy(alpha = 0.8f),
+                                                    RoundedCornerShape(4.dp)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = durationText,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                                text = durationText,
+                                style =
+                                        MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                        )
                         )
                     }
                 }
             }
-            
+
             Column(modifier = Modifier.padding(16.dp).weight(0.5f)) {
                 Text(
-                    text = rec.video.title,
-                    maxLines = 2,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                        text = rec.video.title,
+                        maxLines = 2,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
                 )
                 if (isFocused) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Auto-scrolling Reasoning Text
                     val scrollState = rememberScrollState()
-                    
+
                     LaunchedEffect(Unit) {
                         while (true) {
                             scrollState.scrollTo(0)
                             kotlinx.coroutines.delay(2000)
-                            // Calculate duration based on text length to keep speed consistent. 
+                            // Calculate duration based on text length to keep speed consistent.
                             // Rough est: 50ms per pixel? or just fixed slow speed.
-                            // Max value can be large. 
+                            // Max value can be large.
                             // Let's use a safe fixed duration for now or dynamic.
                             // If max value is 0, it won't scroll.
                             if (scrollState.maxValue > 0) {
                                 scrollState.animateScrollTo(
-                                    scrollState.maxValue,
-                                    animationSpec = androidx.compose.animation.core.tween(
-                                        durationMillis = (scrollState.maxValue * 15).coerceAtLeast(1000), // Slower scroll
-                                        easing = androidx.compose.animation.core.LinearEasing
-                                    )
+                                        scrollState.maxValue,
+                                        animationSpec =
+                                                androidx.compose.animation.core.tween(
+                                                        durationMillis =
+                                                                (scrollState.maxValue * 15)
+                                                                        .coerceAtLeast(
+                                                                                1000
+                                                                        ), // Slower scroll
+                                                        easing =
+                                                                androidx.compose.animation.core
+                                                                        .LinearEasing
+                                                )
                                 )
                                 kotlinx.coroutines.delay(2000)
                             } else {
@@ -690,13 +734,13 @@ fun DashboardVideoCard(
                             }
                         }
                     }
-                    
+
                     Text(
-                        text = rec.reason,
-                        // No maxLines to allow scrolling
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f),
-                        modifier = Modifier.verticalScroll(scrollState)
+                            text = rec.reason,
+                            // No maxLines to allow scrolling
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier.verticalScroll(scrollState)
                     )
                 }
             }

@@ -134,7 +134,7 @@ class ChatRepository(
             {
                 "id": "${video.id}",
                 "title": "${video.title.replace("\"", "\\\"")}",
-                "description": "${video.description.take(200).replace("\"", "\\\"").replace("\n", " ")}...", 
+                "description": "${video.description.take(2048).replace("\"", "\\\"").replace("\n", " ")}...", 
                 "channel": "${video.channelTitle.replace("\"", "\\\"")}",
                 "duration": "${video.duration ?: "Unknown"}"
             }
