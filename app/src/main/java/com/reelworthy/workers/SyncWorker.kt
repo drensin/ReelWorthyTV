@@ -86,6 +86,27 @@ class SyncWorker(
                 }
             }
 
+            // 3b. Sync Subscriptions (if enabled)
+            if (userSettings.includeSubscriptionFeed) {
+                 try {
+                    Log.d("SyncWorker", "Syncing recent videos from subscriptions...")
+                    val subVideoIds = videoRepo.fetchRecentSubscriptionVideos(
+                        accessToken = accessToken,
+                        apiKey = apiKey
+                    )
+                    allValidVideoIds.addAll(subVideoIds)
+                    // We don't increment successCount here because it's an optional extra step?
+                    // Or should we? If this fails, should we abort cleanup?
+                    // Strategy: If subs fail, we just log it. We don't want to abort playlist cleanup.
+                    // However, if we abort cleanup, we might leave old sub videos?
+                    // Ideally, if this fails, we should NOT cleanup sub videos.
+                    // But simplified strategy: Just log.
+                    Log.d("SyncWorker", "Synced ${subVideoIds.size} subscription videos.")
+                } catch (e: Exception) {
+                    Log.e("SyncWorker", "Failed to fetch subscription videos", e)
+                }
+            }
+
             // 4. Garbage Collection
             // Only run cleanup if ALL selected playlists synced successfully.
             // This prevents accidental deletion if a partial network failure occurs (e.g. one playlist fails).

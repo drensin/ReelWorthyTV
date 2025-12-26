@@ -66,4 +66,27 @@ interface YouTubeApiService {
         @Query("maxResults") maxResults: Int = 50,
         @Query("key") apiKey: String
     ): com.reelworthy.data.models.YouTubePlaylistListResponse
+
+    /**
+     * Fetches the user's subscriptions.
+     */
+    @GET("subscriptions")
+    suspend fun getSubscriptions(
+        @retrofit2.http.Header("Authorization") authHeader: String,
+        @Query("part") part: String = "snippet",
+        @Query("mine") mine: Boolean = true,
+        @Query("maxResults") maxResults: Int = 50,
+        @Query("pageToken") pageToken: String? = null,
+        @Query("key") apiKey: String
+    ): com.reelworthy.data.models.YouTubeSubscriptionListResponse
+
+    /**
+     * Fetches channel details (used to find the "uploads" playlist ID).
+     */
+    @GET("channels")
+    suspend fun getChannels(
+        @Query("part") part: String = "contentDetails",
+        @Query("id") id: String,
+        @Query("key") apiKey: String
+    ): com.reelworthy.data.models.YouTubeChannelListResponse
 }

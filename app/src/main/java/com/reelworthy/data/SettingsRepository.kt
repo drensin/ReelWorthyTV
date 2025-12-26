@@ -23,7 +23,8 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 data class UserSettings(
     val aiModel: String,
     val isDeepThinkingEnabled: Boolean,
-    val selectedPlaylistIds: Set<String>
+    val selectedPlaylistIds: Set<String>,
+    val includeSubscriptionFeed: Boolean = false
 )
 
 /**
@@ -39,6 +40,7 @@ class SettingsRepository(private val context: Context) {
         val AI_MODEL = stringPreferencesKey("ai_model")
         val DEEP_THINKING = booleanPreferencesKey("deep_thinking")
         val SELECTED_PLAYLISTS = stringSetPreferencesKey("selected_playlists")
+        val SUBSCRIPTION_FEED = booleanPreferencesKey("subscription_feed")
     }
 
     /**
@@ -49,7 +51,8 @@ class SettingsRepository(private val context: Context) {
             UserSettings(
                 aiModel = preferences[Keys.AI_MODEL] ?: "gemini-3-flash-preview",
                 isDeepThinkingEnabled = preferences[Keys.DEEP_THINKING] ?: false,
-                selectedPlaylistIds = preferences[Keys.SELECTED_PLAYLISTS] ?: emptySet()
+                selectedPlaylistIds = preferences[Keys.SELECTED_PLAYLISTS] ?: emptySet(),
+                includeSubscriptionFeed = preferences[Keys.SUBSCRIPTION_FEED] ?: false
             )
         }
 
@@ -76,6 +79,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun updateSelectedPlaylists(playlistIds: Set<String>) {
         context.dataStore.edit { preferences ->
             preferences[Keys.SELECTED_PLAYLISTS] = playlistIds
+        }
+    }
+
+    suspend fun updateIncludeSubscriptionFeed(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[Keys.SUBSCRIPTION_FEED] = enabled
         }
     }
 

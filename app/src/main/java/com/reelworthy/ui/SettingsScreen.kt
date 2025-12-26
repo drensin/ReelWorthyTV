@@ -187,12 +187,34 @@ fun SettingsScreen(
                                 Text("Edit >", color = Color.LightGray)
                             }
                         }
+                        }
+                    }
+
+
+                // Section: Subscription Feed
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.onSubscriptionFeedChanged(!uiState.settings.includeSubscriptionFeed) }
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Recent from Subscriptions", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                            Text(
+                                "Include recent videos from your subscribed channels",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.LightGray
+                            )
+                        }
+                        Switch(
+                            checked = uiState.settings.includeSubscriptionFeed,
+                            onCheckedChange = { viewModel.onSubscriptionFeedChanged(it) }
+                        )
                     }
                 }
-            }
-        }
-        
-        // --- DIALOGS ---
+            } // End LazyColumn
+        } // End Column
         
         if (showModelDialog) {
             androidx.compose.ui.window.Dialog(onDismissRequest = { showModelDialog = false }) {
@@ -316,3 +338,4 @@ fun SettingsScreen(
         }
     }
 }
+

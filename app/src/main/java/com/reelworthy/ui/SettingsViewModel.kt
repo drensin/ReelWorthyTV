@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * @property syncMessage Status message for the current sync operation.
  */
 data class SettingsUiState(
-    val settings: UserSettings = UserSettings("gemini-3-flash-preview", false, emptySet()),
+    val settings: UserSettings = UserSettings("gemini-3-flash-preview", false, emptySet(), false),
     val allPlaylists: List<PlaylistEntity> = emptyList(),
     val isSyncing: Boolean = false,
     val syncMessage: String? = null
@@ -100,6 +100,13 @@ class SettingsViewModel(
     fun onDeepThinkingChanged(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateDeepThinking(enabled)
+        }
+    }
+
+    /** Enables/Disables fetching recent videos from subscriptions. */
+    fun onSubscriptionFeedChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateIncludeSubscriptionFeed(enabled)
         }
     }
 

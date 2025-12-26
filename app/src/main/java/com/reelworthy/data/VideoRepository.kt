@@ -179,6 +179,164 @@ class VideoRepository(private val videoDao: VideoDao) {
         }
     }
     
+    /**
+     * Fetches recent videos from the user's subscriptions.
+     * Logic Parity with Legacy Web App:
+     * 1. Get Subscriptions.
+     * 2. For each channel, get "Uploads" playlist.
+     * 3. Get TOP 10 videos from each channel.
+     * 4. Aggregate and Sort by Date DESC.
+     * 5. Take TOP 100 globally.
+     * 6. Enrich with Duration.
+     * 7. Filter Shorts (<= 60s).
+     * 8. Insert into DB.
+     *
+     * @return List of video IDs that were successfully synced.
+     */
+    suspend fun fetchRecentSubscriptionVideos(accessToken: String, apiKey: String): List<String> {
+        try {
+            val authHeader = "Bearer $accessToken"
+            
+            // 1. Fetch Subscriptions
+            val allSubs = mutableListOf<com.reelworthy.data.models.YouTubeSubscriptionItem>()
+            var nextToken: String? = null
+            do {
+                val response = RetrofitClient.youtubeApi.getSubscriptions(
+                    authHeader = authHeader,
+                    apiKey = apiKey,
+                    pageToken = nextToken
+                )
+                allSubs.addAll(response.items)
+                nextToken = response.nextPageToken
+            } while (nextToken != null)
+            
+            // 2 & 3. Fetch Recent Uploads per Channel
+            val allCandidateVideos = mutableListOf<VideoEntity>()
+            
+            // Optimization: Run these in parallel chunks if possible, but sequential for now to avoid complexity/rate limits
+            for (sub in allSubs) {
+                try {
+                    val resourceId = sub.snippet.resourceId
+                    val channelId = resourceId.channelId ?: continue
+                    
+                    // Get Uploads Content Details
+                    val channelResponse = RetrofitClient.youtubeApi.getChannels(id = channelId, apiKey = apiKey)
+                    val uploadsPlaylistId = channelResponse.items.firstOrNull()?.contentDetails?.relatedPlaylists?.uploads ?: continue
+                    
+                    // Fetch Top 10 from Uploads
+                    val uploadsResponse = RetrofitClient.youtubeApi.getPlaylistItems(
+                        apiKey = apiKey,
+                        playlistId = uploadsPlaylistId,
+                        maxResults = 10 
+                    )
+                    
+                    for (item in uploadsResponse.items) {
+                        // Convert to basic entity (without duration yet)
+                        val videoId = item.snippet.resourceId.videoId ?: continue
+                         val entity = VideoEntity(
+                            id = videoId,
+                            title = item.snippet.title,
+                            description = item.snippet.description,
+                            thumbnailUrl = item.snippet.thumbnails?.high?.url 
+                                ?: item.snippet.thumbnails?.medium?.url 
+                                ?: item.snippet.thumbnails?.default?.url ?: "",
+                            channelTitle = item.snippet.channelTitle,
+                            publishedAt = item.snippet.publishedAt, // This is published date
+                            duration = null, // To be filled later
+                            addedDate = System.currentTimeMillis() // Sort marker
+                        )
+                        allCandidateVideos.add(entity)
+                    }
+                } catch (e: Exception) {
+                    // Ignore individual channel failures
+                    Log.w("VideoRepository", "Failed to fetch uploads for channel ${sub.snippet.title}", e)
+                }
+            }
+            
+            // 4 & 5. Sort & Top 100
+            // Note: publishedAt format is standard ISO (e.g. 2023-10-27T10:00:00Z), so string comparison works for sorting DESC
+            val top100Candidates = allCandidateVideos
+                .sortedByDescending { it.publishedAt }
+                .take(100)
+                
+            if (top100Candidates.isEmpty()) return emptyList()
+
+            // 6. Enrich (Fetch Durations)
+            // Batch requests max 50
+            val enrichedVideos = mutableListOf<VideoEntity>()
+            
+            val chunks = top100Candidates.chunked(50)
+            for (batch in chunks) {
+                try {
+                    val ids = batch.joinToString(",") { it.id }
+                    val detailsResponse = RetrofitClient.youtubeApi.getVideos(id = ids, apiKey = apiKey)
+                    
+                    // Map details back to entities
+                    for (candidate in batch) {
+                        val details = detailsResponse.items.find { detail -> detail.id == candidate.id }
+                        val duration = details?.contentDetails?.duration
+                        
+                        // 7. Filter Shorts (Duration > 60s)
+                        val isShort = isDurationShort(duration)
+                        
+                        if (!isShort) {
+                            enrichedVideos.add(candidate.copy(duration = duration))
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("VideoRepository", "Failed to enrich batch", e)
+                }
+            }
+            
+            // 8. Insert into DB
+            videoDao.insertVideos(enrichedVideos)
+            Log.d("VideoRepository", "Synced ${enrichedVideos.size} recent videos from subscriptions.")
+            
+            return enrichedVideos.map { it.id }
+            
+        } catch (e: Exception) {
+            Log.e("VideoRepository", "Error fetching subscription videos", e)
+            return emptyList()
+        }
+    }
+
+    private fun isDurationShort(isoDuration: String?): Boolean {
+        if (isoDuration == null) return true // Treat unknown as short/invalid
+        if (isoDuration == "P0D") return true // Live streams sometimes show weird
+        
+        // Simple Heuristic matching Legacy JS:
+        // if it has Hours (H), it's long.
+        if (isoDuration.contains("H")) return false
+        
+        // If it has Minutes (M):
+        // PT2M... -> Long
+        // PT1M... -> Borderline (60s). Legacy said > 60s.
+        // Let's check minutes value.
+        // Regex: PT(\d+)M
+        val match = java.util.regex.Pattern.compile("PT(\\d+)M").matcher(isoDuration)
+        if (match.find()) {
+            val minutes = match.group(1)?.toIntOrNull() ?: 0
+            if (minutes >= 1) {
+                // Check if it's exactly 1M and 0S? Legacy said > 60s.
+                // 1 minute is 60s. So > 60s means 1m 1s.
+                // If minutes >= 2, definitely long.
+                if (minutes >= 2) return false
+                // If 1 minute, check seconds.
+                // Regex: PT1M(\d+)S
+                val secMatch = java.util.regex.Pattern.compile("PT1M(\\d+)S").matcher(isoDuration)
+                if (secMatch.find()) {
+                    val seconds = secMatch.group(1)?.toIntOrNull() ?: 0
+                    if (seconds > 0) return false // 1m 1s+
+                }
+                // If just "PT1M", that is exactly 60s. 60 is NOT > 60. So Short.
+                return true 
+            }
+        }
+        
+        // No Hours, No Minutes (or 0 minutes). Must be seconds only -> Short.
+        return true
+    }
+
     /** Flow emitting all videos from the DB, sorted by newest added. */
     val allVideos: Flow<List<VideoEntity>> = videoDao.getAllVideos()
     
@@ -201,7 +359,7 @@ class VideoRepository(private val videoDao: VideoDao) {
 
     private fun com.reelworthy.data.models.PlaylistItemResult.toEntity(): VideoEntity {
         return VideoEntity(
-            id = this.snippet.resourceId.videoId,
+            id = this.snippet.resourceId.videoId ?: "",
             title = this.snippet.title,
             description = this.snippet.description,
             thumbnailUrl = this.snippet.thumbnails?.high?.url ?: this.snippet.thumbnails?.medium?.url ?: "",

@@ -128,9 +128,50 @@ data class PlaylistItemSnippet(
  * @property videoId The ID of the video.
  */
 data class ResourceId(
-    val videoId: String
+    val videoId: String?,
+    val channelId: String? = null
 )
 
 data class PlaylistItemContentDetails(
     val videoPublishedAt: String?
+)
+
+/**
+ * Response for 'subscriptions' endpoint.
+ */
+data class YouTubeSubscriptionListResponse(
+    val items: List<YouTubeSubscriptionItem>,
+    val nextPageToken: String?
+)
+
+data class YouTubeSubscriptionItem(
+    val id: String,
+    val snippet: SubscriptionSnippet
+)
+
+data class SubscriptionSnippet(
+    val title: String,
+    val description: String,
+    val resourceId: ResourceId, // Contains channelId
+    val thumbnails: Thumbnails?
+)
+
+/**
+ * Response for 'channels' endpoint.
+ */
+data class YouTubeChannelListResponse(
+    val items: List<YouTubeChannelItem>
+)
+
+data class YouTubeChannelItem(
+    val id: String,
+    val contentDetails: ChannelContentDetails?
+)
+
+data class ChannelContentDetails(
+    val relatedPlaylists: RelatedPlaylists?
+)
+
+data class RelatedPlaylists(
+    val uploads: String?
 )
