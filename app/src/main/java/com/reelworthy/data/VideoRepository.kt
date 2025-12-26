@@ -169,6 +169,11 @@ class VideoRepository(private val videoDao: VideoDao) {
 
     /**
      * Deletes all local videos that are NOT in the provided list of IDs.
+     *
+     * This is a "Garbage Collection" method used after a successful sync to remove
+     * videos that have been deselected by the user or removed from the source playlists.
+     *
+     * @param ids The list of "valid" video IDs that should reside in the database.
      */
     suspend fun deleteLocalVideosNotIn(ids: List<String>) {
         if (ids.isNotEmpty()) {
@@ -180,18 +185,21 @@ class VideoRepository(private val videoDao: VideoDao) {
     }
     
     /**
-     * Fetches recent videos from the user's subscriptions.
-     * Logic Parity with Legacy Web App:
-     * 1. Get Subscriptions.
-     * 2. For each channel, get "Uploads" playlist.
-     * 3. Get TOP 10 videos from each channel.
-     * 4. Aggregate and Sort by Date DESC.
-     * 5. Take TOP 100 globally.
-     * 6. Enrich with Duration.
-     * 7. Filter Shorts (<= 60s).
-     * 8. Insert into DB.
+     * Fetches recent videos from the user's subscriptions to maintain feature parity with the legacy web app.
      *
-     * @return List of video IDs that were successfully synced.
+     * This process involves several steps to respect API quotas while providing a relevant feed:
+     * 1. **Fetch Subscriptions**: Retrieves the user's subscribed channels.
+     * 2. **Resolve Uploads**: For each channel, identifies the "Uploads" playlist ID.
+     * 3. **Fetch Candidates**: Retrieves the top 10 most recent videos from each channel's uploads.
+     * 4. **Global Sort**: Aggregates all candidates and sorts them by publication date (newest first).
+     * 5. **Selection**: Selects the top 100 global candidates.
+     * 6. **Enrichment**: Fetches full details (including duration) for these 100 videos.
+     * 7. **Filtering**: Excludes "Shorts" (videos ≤ 60 seconds) to match the TV form factor preference.
+     * 8. **Persistence**: Saves the final list to the local database.
+     *
+     * @param accessToken The OAuth 2.0 Access Token for the authenticated user.
+     * @param apiKey The Google Cloud Console API Key for quota-heavy public data fetches.
+     * @return A list of video IDs that were successfully synced and persisted.
      */
     suspend fun fetchRecentSubscriptionVideos(accessToken: String, apiKey: String): List<String> {
         try {
@@ -300,6 +308,18 @@ class VideoRepository(private val videoDao: VideoDao) {
         }
     }
 
+    /**
+     * Determines if a video is considered a "Short" based on its ISO 8601 duration.
+     *
+     * Heuristic:
+     * - Any duration with Hours (H) is Long.
+     * - Any duration with Minutes (M) >= 2 is Long.
+     * - Any duration with 1 Minute and > 0 Seconds is Long.
+     * - "PT1M" (exactly 60s) and anything less is Short.
+     *
+     * @param isoDuration The ISO 8601 duration string (e.g., "PT1H", "PT59S").
+     * @return True if the video is ≤ 60 seconds, False otherwise.
+     */
     private fun isDurationShort(isoDuration: String?): Boolean {
         if (isoDuration == null) return true // Treat unknown as short/invalid
         if (isoDuration == "P0D") return true // Live streams sometimes show weird

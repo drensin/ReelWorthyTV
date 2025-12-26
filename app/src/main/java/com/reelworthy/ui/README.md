@@ -4,7 +4,7 @@ This package contains all components related to the User Interface, built primar
 
 ## Screens
 *   **`DashboardScreen`**: The main application screen. Displays the "Concierge" interface, chat input, and recommended video carousel.
-*   **`SettingsScreen`**: A dialog-based settings interface for configuring AI models and playlists.
+*   **`SettingsScreen`**: A dialog-based settings interface for configuring AI models, selecting playlists, and toggling the "Recent from Subscriptions" feed.
 
 ## ViewModels
 *   **`ChatViewModel`**: Manages the state of the chat conversation, streaming AI responses, and holding recommended videos.

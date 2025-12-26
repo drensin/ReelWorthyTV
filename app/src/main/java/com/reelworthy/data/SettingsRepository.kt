@@ -66,6 +66,11 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Updates the "Deep Thinking" preference.
+     *
+     * @param enabled True to enable deep thinking mode.
+     */
     suspend fun updateDeepThinking(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[Keys.DEEP_THINKING] = enabled
@@ -82,6 +87,11 @@ class SettingsRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Updates the preference for including recent videos from subscriptions in the AI context.
+     *
+     * @param enabled True to include subscription feed.
+     */
     suspend fun updateIncludeSubscriptionFeed(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[Keys.SUBSCRIPTION_FEED] = enabled

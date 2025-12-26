@@ -89,21 +89,33 @@ class SettingsViewModel(
         }
     }
 
-    /** Updates the preferred AI model. */
+    /**
+     * Updates the preferred AI model by delegating to the repository.
+     *
+     * @param modelId The ID of the selected model (e.g., "gemini-1.5-flash").
+     */
     fun onModelSelected(modelId: String) {
         viewModelScope.launch {
             settingsRepository.updateAiModel(modelId)
         }
     }
     
-    /** Enables/Disables deep thinking mode. */
+    /**
+     * Enables or disables "Deep Thinking" mode.
+     *
+     * @param enabled True to enable.
+     */
     fun onDeepThinkingChanged(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateDeepThinking(enabled)
         }
     }
 
-    /** Enables/Disables fetching recent videos from subscriptions. */
+    /**
+     * Toggles the inclusion of recent subscription videos in the AI context.
+     *
+     * @param enabled True to include the subscription feed.
+     */
     fun onSubscriptionFeedChanged(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateIncludeSubscriptionFeed(enabled)

@@ -15,6 +15,7 @@ But when we actually sit down in front of the TV, we are tired. Opening the "Wat
 
 ### The Solution: An AI Concierge
 ReelWorthy TV solves this by acting as an intelligent filter—a "concierge"—between you and your massive backlog.
+It curates content from your **Watch Later** list and your **Recent Subscription Uploads** to find the perfect video.
 Instead of showing you a list, it asks you a simple question:
 
 > *"What would you like to watch today?"*
@@ -79,7 +80,8 @@ The user experience is designed to be minimal and cinematic.
 
 1.  **Ingestion (Sync)**:
     *   Background Workers (`SyncWorker`) periodically talk to the YouTube Data API.
-    *   They fetch your selected playlists.
+    *   They fetch your selected playlists and (optionally) your **Subscription Feed** (top 100 recent videos).
+    *   They perform **Garbage Collection** to remove videos you've blocked, watched, or deselected, keeping the database lean.
     *   They store `VideoEntity` objects in the local `AppDatabase`.
     
 2.  **The Prompt**:
@@ -116,7 +118,7 @@ This package handles all data operations. It is the "Truth".
 *   **`VideoEntity.kt`**: Defines the table structure (columns) for videos.
 *   **`RetrofitClient.kt`**: Configures the connection to YouTube and Gemini.
 *   **`ChatRepository.kt`**: The logic for talking to Gemini. It constructs the prompt and parses the JSON response.
-*   **`VideoRepository.kt`**: Hides the complexity of data sources. When the UI asks for videos, this repo decides whether to give cached data or fetch fresh data.
+*   **`VideoRepository.kt`**: Hides the complexity of data sources. Handles logic parity with the web app (e.g. fetching subscriptions, sorting, filtering Shorts).
 
 ### B. `com.reelworthy.ui` (The Paint)
 This package handles what the user sees.
@@ -130,7 +132,7 @@ This package handles what the user sees.
     *   `messages`: A list of chat bubbles.
     *   `isLoading`: Are we waiting for AI?
     *   `currentStreamingText`: The raw text coming from Gemini right now.
-*   **`SettingsScreen.kt`**: The configuration panel to select playlists or change AI models.
+*   **`SettingsScreen.kt`**: The configuration panel to select playlists, toggle "Recent from Subscriptions", or change AI models.
 *   **`FocusableComponents.kt`**: **CRITICAL**. This file contains wrapper components (like `FocusableScaleWrapper`) that handle the TV-specific animation where a card grows larger when you select it.
 
 ### C. `com.reelworthy.workers` (The Backend)

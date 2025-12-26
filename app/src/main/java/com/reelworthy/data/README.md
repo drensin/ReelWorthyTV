@@ -4,9 +4,9 @@ This package contains the data management logic for the application, following t
 
 ## Repositories
 Repositories are the source of truth for data.
-*   **`VideoRepository`**: Manages video data. Handles fetching from YouTube API and caching/retrieving from the local Room database (`VideoDao`).
+*   **`VideoRepository`**: Manages video data. Handles fetching from YouTube API (Playlists & Subscriptions), ensuring parity with legacy web logic (e.g., Short filtering), and caching in `VideoDao`.
 *   **`ChatRepository`**: Manages interactions with the Generative AI (Gemini) API.
-*   **`SettingsRepository`**: Manages user preferences (API Keys, selected playlists) using `DataStore`.
+*   **`SettingsRepository`**: Manages user preferences (API Keys, selected playlists, Subscription Feed toggle) using `DataStore`.
 *   **`AuthRepository`**: Wraps Firebase Authentication and Google Sign-In logic.
 
 ## Local Database (Room)

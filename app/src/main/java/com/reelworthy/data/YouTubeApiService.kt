@@ -69,6 +69,14 @@ interface YouTubeApiService {
 
     /**
      * Fetches the user's subscriptions.
+     *
+     * @param authHeader The OAuth 2.0 Access Token.
+     * @param part The `part` parameter. Defaults to "snippet".
+     * @param mine Set to `true` to fetch the authenticated user's subscriptions.
+     * @param maxResults The maximum results per page.
+     * @param pageToken Token for pagination.
+     * @param apiKey The API key.
+     * @return A [YouTubeSubscriptionListResponse] containing the list of subscriptions.
      */
     @GET("subscriptions")
     suspend fun getSubscriptions(
@@ -81,7 +89,15 @@ interface YouTubeApiService {
     ): com.reelworthy.data.models.YouTubeSubscriptionListResponse
 
     /**
-     * Fetches channel details (used to find the "uploads" playlist ID).
+     * Fetches details for a specific channel.
+     *
+     * Crucially used to resolve the "Uploads" playlist ID (contentDetails.relatedPlaylists.uploads)
+     * for a given channel ID.
+     *
+     * @param part The `part` parameter. Defaults to "contentDetails".
+     * @param id The Channel ID.
+     * @param apiKey The API key.
+     * @return A [YouTubeChannelListResponse] containing channel details.
      */
     @GET("channels")
     suspend fun getChannels(
