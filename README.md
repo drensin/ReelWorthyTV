@@ -99,10 +99,10 @@ The user experience is designed to be minimal and cinematic.
     *   The AI returns a list of Video IDs (e.g., `["abc12345", "xyz98765"]`).
     *   We "hydrate" these IDs by looking them up in our `AppDatabase` to get the full thumbnails, descriptions, and titles to display in the UI.
 
-### Navigation Logic
-TV apps are different from phone apps.
-*   **No Touch**: You can't tap. You can only move Up, Down, Left, Right, and Enter.
-*   **Focus**: We must always know which element has "Focus".
+### Navigation Logic (Hybrid Model)
+ReelWorthy TV is designed for a hybrid future (TVs and Foldables).
+*   **Hybrid Input**: We support both **5-way D-Pad** (TV Remotes) and **Touch** (Foldables/Tablets) seamlessly.
+*   **Unified Focus**: Interactions are standardized. A "Click" on a remote and a "Tap" on a screen trigger the same `onClick`. A "Hold Center" on a remote and a "Long Press" on a screen trigger the same `onLongClick`.
 *   **No Back Stack Complexity**: We use a simple overlay system. The `DashboardScreen` is the base. `Settings` is a dialog on top. `Thinking` is an overlay on top.
 
 ---
@@ -137,7 +137,7 @@ This package handles what the user sees.
     *   `isLoading`: Are we waiting for AI?
     *   `currentStreamingText`: The raw text coming from Gemini right now.
 *   **`SettingsScreen.kt`**: The configuration panel to select playlists, toggle "Recent from Subscriptions", or change AI models.
-*   **`FocusableComponents.kt`**: **CRITICAL**. This file contains wrapper components (like `FocusableScaleWrapper`) that handle the TV-specific animation where a card grows larger when you select it.
+*   **`FocusableComponents.kt`**: **CRITICAL**. This file contains the "Hybrid Primitives" (e.g., `FocusableScaleWrapper`). These wrappers handle the logic to translate D-Pad events and Touch events into a unified interaction model, ensuring buttons work on both Remotes and Touchscreens.
 
 ### C. `com.reelworthy.workers` (The Backend)
 *   **`SyncWorker.kt`**: A background task that runs every 6 hours (or on app launch). It silently updates the database so the user never sees a loading spinner for "Ingesting data".

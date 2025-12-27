@@ -11,7 +11,7 @@ This package contains all components related to the User Interface, built primar
 *   **`SettingsViewModel`**: Manages configuration state (API keys, playlist selections) and exposes them to the UI.
 
 ## Components
-*   **`FocusableComponents.kt`**: Contains reusable TV-specific UI elements like `FocusableIcon`, `FocusableChip`, and `FocusableScaleWrapper` (used for the "grow on focus" effect).
+*   **`FocusableComponents.kt`**: Contains the core "Hybrid Wrappers" (`FocusableScaleWrapper`, `FocusableIcon`) that abstract away the differences between Android TV (D-Pad) and standard Android (Touch), providing a unified API for click, long-click, and focus states.
 
 ## Activities
 *   **`MainActivity`**: The single entry point for the application. Sets up the navigation graph (or root composable) and initializes basic dependencies.

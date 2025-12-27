@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -34,8 +35,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,16 +52,20 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.reelworthy.data.SearchHistoryEntity
+import com.reelworthy.util.TimeUtils
+import kotlinx.coroutines.delay
 
 /**
  * The primary screen of the ReelWorthy TV application.
@@ -182,7 +190,7 @@ fun DashboardScreen(
                                             .focusRequester(carouselFocusRequester)
                     ) {
                         items(recommendations) { rec ->
-                            val context = androidx.compose.ui.platform.LocalContext.current
+                            val context = LocalContext.current
                             DashboardVideoCard(
                                     rec = rec,
                                     onPlayClick = { videoId ->
@@ -224,7 +232,7 @@ fun DashboardScreen(
                                 text = lastAiMessage.text,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Color.White,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                textAlign = TextAlign.Center
                         )
                     }
                 } else if (!isLoading) {
@@ -254,7 +262,7 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 56.dp, vertical = 32.dp)
             ) {
                 if (showSearchInput) {
-                    androidx.compose.material3.TextField(
+                    TextField(
                             value = inputText,
                             onValueChange = { inputText = it },
                             placeholder = { androidx.compose.material3.Text("Search...") },
@@ -267,7 +275,7 @@ fun DashboardScreen(
                                                     RoundedCornerShape(8.dp)
                                             ),
                             colors =
-                                    androidx.compose.material3.TextFieldDefaults.colors(
+                                    TextFieldDefaults.colors(
                                             focusedContainerColor = Color.Black.copy(alpha = 0.8f),
                                             unfocusedContainerColor =
                                                     Color.Black.copy(alpha = 0.5f),
@@ -301,9 +309,7 @@ fun DashboardScreen(
 
                         // History Trigger
                         FocusableIcon(
-                                icon =
-                                        androidx.compose.material.icons.Icons.Default
-                                                .History, // Better than Refresh
+                                icon = Icons.Default.History,
                                 contentDescription = "History",
                                 onClick = { showHistoryModal = true }
                         )
@@ -359,7 +365,7 @@ fun DashboardScreen(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun SearchHistoryModal(
-        history: List<com.reelworthy.data.SearchHistoryEntity>,
+        history: List<SearchHistoryEntity>,
         onClose: () -> Unit,
         onSelectQuery: (String) -> Unit,
         onDeleteQuery: (String) -> Unit
@@ -390,9 +396,7 @@ fun SearchHistoryModal(
                     Text("No recent searches.", color = Color.Gray)
                 }
             } else {
-                androidx.compose.foundation.lazy.LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(history) { item ->
                         HistoryItem(
                                 query = item.query,
@@ -411,6 +415,13 @@ fun SearchHistoryModal(
     }
 }
 
+/**
+ * Represents a single row in the Search History list.
+ *
+ * @param query The search query string.
+ * @param onSelect Callback when the item is clicked/selected.
+ * @param onDelete Callback when the item is to be deleted (confirmed via dialog).
+ */
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
@@ -420,7 +431,7 @@ fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
         // Prevent accidental click from the "Long Press Release" event
         var isInputReady by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(500) // Buffer for key release
+            delay(250) // Reduced buffer
             isInputReady = true
         }
 
@@ -447,22 +458,55 @@ fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
                             horizontalArrangement = Arrangement.End,
                             modifier = Modifier.fillMaxWidth()
                     ) {
-                        Button(onClick = { if (isInputReady) showDeleteDialog = false }) {
-                            Text("Cancel")
+                        // Cancel Button
+                        FocusableScaleWrapper(
+                                onClick = { if (isInputReady) showDeleteDialog = false },
+                                modifier = Modifier.height(40.dp)
+                        ) { isFocused ->
+                            Box(
+                                    modifier =
+                                            Modifier.background(
+                                                            if (isFocused)
+                                                                    Color.White.copy(alpha = 0.1f)
+                                                            else Color.Transparent,
+                                                            RoundedCornerShape(12.dp)
+                                                    )
+                                                    .border(
+                                                            1.dp,
+                                                            if (isFocused) Color.White
+                                                            else Color.Gray,
+                                                            RoundedCornerShape(12.dp)
+                                                    )
+                                                    .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.Center
+                            ) { Text("Cancel", color = Color.White) }
                         }
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        Button(
+
+                        // Delete Button
+                        FocusableScaleWrapper(
                                 onClick = {
                                     if (isInputReady) {
                                         onDelete()
                                         showDeleteDialog = false
                                     }
                                 },
-                                colors =
-                                        androidx.tv.material3.ButtonDefaults.colors(
-                                                containerColor = MaterialTheme.colorScheme.error
-                                        )
-                        ) { Text("Delete") }
+                                modifier = Modifier.height(40.dp)
+                        ) { isFocused ->
+                            val backgroundColor =
+                                    if (isFocused) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                            Box(
+                                    modifier =
+                                            Modifier.background(
+                                                            backgroundColor,
+                                                            RoundedCornerShape(12.dp)
+                                                    )
+                                                    .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.Center
+                            ) { Text("Delete", color = Color.White, fontWeight = FontWeight.Bold) }
+                        }
                     }
                 }
             }
@@ -485,7 +529,7 @@ fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.History,
+                    imageVector = Icons.Default.History,
                     contentDescription = null,
                     tint = if (isFocused) Color.White else Color.Gray,
                     modifier = Modifier.size(20.dp)
@@ -496,7 +540,7 @@ fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
             val scrollState = rememberScrollState()
             LaunchedEffect(isFocused) {
                 if (isFocused) {
-                    kotlinx.coroutines.delay(1000) // Initial delay to read start
+                    delay(1000) // Initial delay to read start
                     while (true) {
                         val maxScroll = scrollState.maxValue
                         if (maxScroll > 0) {
@@ -515,9 +559,9 @@ fun HistoryItem(query: String, onSelect: () -> Unit, onDelete: () -> Unit) {
                                                                     .LinearEasing
                                             )
                             )
-                            kotlinx.coroutines.delay(2000) // Pause at end
+                            delay(2000) // Pause at end
                             scrollState.scrollTo(0) // Snap back
-                            kotlinx.coroutines.delay(2000) // Pause at start
+                            delay(2000) // Pause at start
                         } else {
                             break // Content fits, no scroll needed
                         }
@@ -608,7 +652,7 @@ fun ThinkingModal(statusText: String) {
                         }
 
                         // Wait for next frame (approx 16ms for 60fps)
-                        kotlinx.coroutines.delay(16)
+                        delay(16)
                     }
                 }
 
@@ -642,21 +686,37 @@ fun ThinkingModal(statusText: String) {
 @Composable
 fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
     val durationText =
-            remember(rec.video.duration) {
-                com.reelworthy.util.TimeUtils.formatIsoDuration(rec.video.duration)
-            }
+            remember(rec.video.duration) { TimeUtils.formatIsoDuration(rec.video.duration) }
+
+    var isRevealed by remember { mutableStateOf(false) }
+    var isFocusedState by remember { mutableStateOf(false) }
 
     FocusableScaleWrapper(
-            onClick = { onPlayClick(rec.video.id) },
+            onClick = {
+                // If D-pad focused OR already revealed (via touch), play.
+                // Otherwise (first touch), reveal details.
+                if (isFocusedState || isRevealed) {
+                    onPlayClick(rec.video.id)
+                } else {
+                    isRevealed = true
+                }
+            },
             modifier =
                     Modifier.width(320.dp) // Increased width
-                            .fillMaxHeight() // Fill the LazyRow's height (which fills parent
-            // weight)
-            ) { isFocused ->
+                            .fillMaxHeight() // Fill the LazyRow's height
+    ) { isFocused ->
+
+        // Capture focus state for the click handler
+        SideEffect { isFocusedState = isFocused }
+
+        val showDetails = isFocused || isRevealed
+
         Column(
                 modifier =
                         Modifier.fillMaxSize()
-                                .background(if (isFocused) Color(0xFF2A2A2A) else Color(0xFF1A1A1A))
+                                .background(
+                                        if (showDetails) Color(0xFF2A2A2A) else Color(0xFF1A1A1A)
+                                )
         ) {
             // Thumbnail Container with Duration Overlay
             Box(modifier = Modifier.fillMaxWidth().weight(0.5f)) {
@@ -698,7 +758,7 @@ fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                 )
-                if (isFocused) {
+                if (showDetails) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // Auto-scrolling Reasoning Text
@@ -707,12 +767,7 @@ fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
                     LaunchedEffect(Unit) {
                         while (true) {
                             scrollState.scrollTo(0)
-                            kotlinx.coroutines.delay(2000)
-                            // Calculate duration based on text length to keep speed consistent.
-                            // Rough est: 50ms per pixel? or just fixed slow speed.
-                            // Max value can be large.
-                            // Let's use a safe fixed duration for now or dynamic.
-                            // If max value is 0, it won't scroll.
+                            delay(2000)
                             if (scrollState.maxValue > 0) {
                                 scrollState.animateScrollTo(
                                         scrollState.maxValue,
@@ -720,15 +775,13 @@ fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
                                                 androidx.compose.animation.core.tween(
                                                         durationMillis =
                                                                 (scrollState.maxValue * 15)
-                                                                        .coerceAtLeast(
-                                                                                1000
-                                                                        ), // Slower scroll
+                                                                        .coerceAtLeast(1000),
                                                         easing =
                                                                 androidx.compose.animation.core
                                                                         .LinearEasing
                                                 )
                                 )
-                                kotlinx.coroutines.delay(2000)
+                                delay(2000)
                             } else {
                                 break // Text fits, no scroll needed
                             }
@@ -737,7 +790,6 @@ fun DashboardVideoCard(rec: RecommendedVideo, onPlayClick: (String) -> Unit) {
 
                     Text(
                             text = rec.reason,
-                            // No maxLines to allow scrolling
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.8f),
                             modifier = Modifier.verticalScroll(scrollState)

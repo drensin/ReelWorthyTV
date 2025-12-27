@@ -1,0 +1,85 @@
+--------- beginning of main
+12-26 18:55:50.837  7721  7721 E VideoRepository: HTTP Error fetching playlists: code=400, body={
+12-26 18:55:50.837  7721  7721 E VideoRepository:   "error": {
+12-26 18:55:50.837  7721  7721 E VideoRepository:     "code": 400,
+12-26 18:55:50.837  7721  7721 E VideoRepository:     "message": "The API Key and the authentication credential are from different projects.",
+12-26 18:55:50.837  7721  7721 E VideoRepository:     "errors": [
+12-26 18:55:50.837  7721  7721 E VideoRepository:       {
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "message": "The API Key and the authentication credential are from different projects.",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "domain": "global",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "reason": "badRequest"
+12-26 18:55:50.837  7721  7721 E VideoRepository:       }
+12-26 18:55:50.837  7721  7721 E VideoRepository:     ],
+12-26 18:55:50.837  7721  7721 E VideoRepository:     "status": "INVALID_ARGUMENT",
+12-26 18:55:50.837  7721  7721 E VideoRepository:     "details": [
+12-26 18:55:50.837  7721  7721 E VideoRepository:       {
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "@type": "type.googleapis.com/google.rpc.Help",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "links": [
+12-26 18:55:50.837  7721  7721 E VideoRepository:           {
+12-26 18:55:50.837  7721  7721 E VideoRepository:             "description": "Google developer console API key",
+12-26 18:55:50.837  7721  7721 E VideoRepository:             "url": "https://console.developers.google.com/project/1052761857807/apiui/credential"
+12-26 18:55:50.837  7721  7721 E VideoRepository:           }
+12-26 18:55:50.837  7721  7721 E VideoRepository:         ]
+12-26 18:55:50.837  7721  7721 E VideoRepository:       },
+12-26 18:55:50.837  7721  7721 E VideoRepository:       {
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "reason": "CONSUMER_INVALID",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "domain": "googleapis.com",
+12-26 18:55:50.837  7721  7721 E VideoRepository:         "metadata": {
+12-26 18:55:50.837  7721  7721 E VideoRepository:           "consumer": "projects/1052761857807",
+12-26 18:55:50.837  7721  7721 E VideoRepository:           "service": "youtube.googleapis.com"
+12-26 18:55:50.837  7721  7721 E VideoRepository:         }
+12-26 18:55:50.837  7721  7721 E VideoRepository:       }
+12-26 18:55:50.837  7721  7721 E VideoRepository:     ]
+12-26 18:55:50.837  7721  7721 E VideoRepository:   }
+12-26 18:55:50.837  7721  7721 E VideoRepository: }
+12-26 18:55:50.837  7721  7721 E VideoRepository: 
+12-26 18:55:50.837  7721  7721 E VideoRepository: retrofit2.HttpException: HTTP 400 
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at retrofit2.KotlinExtensions$await$2$2.onResponse(KotlinExtensions.kt:53)
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at retrofit2.OkHttpCall$1.onResponse(OkHttpCall.java:161)
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:519)
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+12-26 18:55:50.837  7721  7721 E VideoRepository: 	at java.lang.Thread.run(Thread.java:1563)
+12-26 18:55:53.336  7721  7721 E VideoRepository: HTTP Error fetching playlists: code=400, body={
+12-26 18:55:53.336  7721  7721 E VideoRepository:   "error": {
+12-26 18:55:53.336  7721  7721 E VideoRepository:     "code": 400,
+12-26 18:55:53.336  7721  7721 E VideoRepository:     "message": "The API Key and the authentication credential are from different projects.",
+12-26 18:55:53.336  7721  7721 E VideoRepository:     "errors": [
+12-26 18:55:53.336  7721  7721 E VideoRepository:       {
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "message": "The API Key and the authentication credential are from different projects.",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "domain": "global",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "reason": "badRequest"
+12-26 18:55:53.336  7721  7721 E VideoRepository:       }
+12-26 18:55:53.336  7721  7721 E VideoRepository:     ],
+12-26 18:55:53.336  7721  7721 E VideoRepository:     "status": "INVALID_ARGUMENT",
+12-26 18:55:53.336  7721  7721 E VideoRepository:     "details": [
+12-26 18:55:53.336  7721  7721 E VideoRepository:       {
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "@type": "type.googleapis.com/google.rpc.Help",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "links": [
+12-26 18:55:53.336  7721  7721 E VideoRepository:           {
+12-26 18:55:53.336  7721  7721 E VideoRepository:             "description": "Google developer console API key",
+12-26 18:55:53.336  7721  7721 E VideoRepository:             "url": "https://console.developers.google.com/project/1052761857807/apiui/credential"
+12-26 18:55:53.336  7721  7721 E VideoRepository:           }
+12-26 18:55:53.336  7721  7721 E VideoRepository:         ]
+12-26 18:55:53.336  7721  7721 E VideoRepository:       },
+12-26 18:55:53.336  7721  7721 E VideoRepository:       {
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "reason": "CONSUMER_INVALID",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "domain": "googleapis.com",
+12-26 18:55:53.336  7721  7721 E VideoRepository:         "metadata": {
+12-26 18:55:53.336  7721  7721 E VideoRepository:           "service": "youtube.googleapis.com",
+12-26 18:55:53.336  7721  7721 E VideoRepository:           "consumer": "projects/1052761857807"
+12-26 18:55:53.336  7721  7721 E VideoRepository:         }
+12-26 18:55:53.336  7721  7721 E VideoRepository:       }
+12-26 18:55:53.336  7721  7721 E VideoRepository:     ]
+12-26 18:55:53.336  7721  7721 E VideoRepository:   }
+12-26 18:55:53.336  7721  7721 E VideoRepository: }
+12-26 18:55:53.336  7721  7721 E VideoRepository: 
+12-26 18:55:53.336  7721  7721 E VideoRepository: retrofit2.HttpException: HTTP 400 
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at retrofit2.KotlinExtensions$await$2$2.onResponse(KotlinExtensions.kt:53)
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at retrofit2.OkHttpCall$1.onResponse(OkHttpCall.java:161)
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:519)
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+12-26 18:55:53.336  7721  7721 E VideoRepository: 	at java.lang.Thread.run(Thread.java:1563)

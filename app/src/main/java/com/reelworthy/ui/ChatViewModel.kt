@@ -4,10 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reelworthy.data.ChatRepository
-import com.reelworthy.data.VideoDao
 import com.reelworthy.data.SettingsRepository
+import com.reelworthy.data.VideoDao
 import com.reelworthy.data.VideoEntity
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -22,11 +24,11 @@ import kotlinx.coroutines.launch
  * @property recommendations List of videos recommended in this message (if any).
  */
 data class ChatMessage(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val text: String,
-    val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis(),
-    val recommendations: List<RecommendedVideo> = emptyList() // New field
+        val id: String = UUID.randomUUID().toString(),
+        val text: String,
+        val isUser: Boolean,
+        val timestamp: Long = System.currentTimeMillis(),
+        val recommendations: List<RecommendedVideo> = emptyList()
 )
 
 /**
@@ -34,10 +36,7 @@ data class ChatMessage(
  * @property video The full [VideoEntity] from the database.
  * @property reason The explanation text.
  */
-data class RecommendedVideo(
-    val video: VideoEntity,
-    val reason: String
-)
+data class RecommendedVideo(val video: VideoEntity, val reason: String)
 
 /**
  * ViewModel for the [DashboardScreen].
@@ -53,14 +52,14 @@ data class RecommendedVideo(
  * @property settingsRepository Repository for user preferences.
  */
 class ChatViewModel(
-    private val apiKey: String,
-    private val videoDao: VideoDao,
-    private val settingsRepository: SettingsRepository,
-    private val searchHistoryRepository: com.reelworthy.data.SearchHistoryRepository
+        private val apiKey: String,
+        private val videoDao: VideoDao,
+        private val settingsRepository: SettingsRepository,
+        private val searchHistoryRepository: com.reelworthy.data.SearchHistoryRepository
 ) : ViewModel() {
 
     private val repository = ChatRepository(apiKey, videoDao, settingsRepository)
-    
+
     // The list of completed chat messages
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
@@ -74,11 +73,12 @@ class ChatViewModel(
     val currentStreamingText: StateFlow<String> = _currentStreamingText.asStateFlow()
 
     // Search History Flow
-    val searchHistory = searchHistoryRepository.recentSearches.stateIn(
-        scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val searchHistory =
+            searchHistoryRepository.recentSearches.stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = emptyList()
+            )
 
     /**
      * Sends a user query to the AI and processes the streaming response.
@@ -96,62 +96,57 @@ class ChatViewModel(
         if (text.isBlank()) return
 
         // Add to history
-        viewModelScope.launch {
-            searchHistoryRepository.addSearch(text)
-        }
+        viewModelScope.launch { searchHistoryRepository.addSearch(text) }
 
         val userMsg = ChatMessage(text = text, isUser = true)
         _messages.value = _messages.value + userMsg
-        
+
         viewModelScope.launch {
             _isLoading.value = true
             _currentStreamingText.value = "Thinking..."
             Log.d("ChatViewModel", "Sending query... (Streaming Mode)")
-            
+
             var finalAccumulatedText = ""
             var finalRecs = listOf<RecommendedVideo>()
-            
+
             try {
                 // Collect streaming updates
                 repository.getRecommendations(text).collect { update ->
                     val accumulatedText = update.text
                     val isComplete = update.isComplete
-                    
+
                     // Update streaming text independently of the main message list
                     _currentStreamingText.value = accumulatedText
                     finalAccumulatedText = accumulatedText
-                    
+
                     if (isComplete && update.recommendations.isNotEmpty()) {
                         // Hydrate only on completion
-                         val allVideos = videoDao.getAllVideosList()
-                         val videoMap = allVideos.associateBy { it.id }
-                         
-                         val hydratedRecs = mutableListOf<RecommendedVideo>()
-                         update.recommendations.forEach { rec ->
+                        val allVideos = videoDao.getAllVideosList()
+                        val videoMap = allVideos.associateBy { it.id }
+
+                        val hydratedRecs = mutableListOf<RecommendedVideo>()
+                        update.recommendations.forEach { rec ->
                             val entity = videoMap[rec.videoId]
                             if (entity != null) {
                                 hydratedRecs.add(RecommendedVideo(entity, rec.reason))
                             }
-                         }
-                         finalRecs = hydratedRecs
+                        }
+                        finalRecs = hydratedRecs
                     }
                 }
-                
+
                 // Stream complete. Now add the final message to the list.
-                val aiMsg = ChatMessage(
-                    text = finalAccumulatedText,
-                    isUser = false,
-                    recommendations = finalRecs
-                )
+                val aiMsg =
+                        ChatMessage(
+                                text = finalAccumulatedText,
+                                isUser = false,
+                                recommendations = finalRecs
+                        )
                 _messages.value = _messages.value + aiMsg
-                
             } catch (e: Exception) {
                 Log.e("ChatViewModel", "Error getting recs", e)
-                 val errorMsg = ChatMessage(
-                     text = "Error: ${e.message}",
-                     isUser = false
-                 )
-                 _messages.value = _messages.value + errorMsg
+                val errorMsg = ChatMessage(text = "Error: ${e.message}", isUser = false)
+                _messages.value = _messages.value + errorMsg
             } finally {
                 _isLoading.value = false
                 _currentStreamingText.value = ""
@@ -159,12 +154,8 @@ class ChatViewModel(
         }
     }
 
-    /**
-     * Deletes a search item from history.
-     */
+    /** Deletes a search item from history. */
     fun deleteSearchHistoryItem(query: String) {
-        viewModelScope.launch {
-            searchHistoryRepository.deleteSearch(query)
-        }
+        viewModelScope.launch { searchHistoryRepository.deleteSearch(query) }
     }
 }
