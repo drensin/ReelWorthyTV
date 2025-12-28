@@ -141,7 +141,11 @@ class VideoRepository(private val videoDao: VideoDao) {
                     val videoIds = chunk.map { it.id }.joinToString(",")
                     try {
                         val videoDetailsResponse =
-                                RetrofitClient.youtubeApi.getVideos(id = videoIds, apiKey = apiKey)
+                                RetrofitClient.youtubeApi.getVideos(
+                                        authHeader = authHeader,
+                                        id = videoIds,
+                                        apiKey = if (authHeader != null) null else apiKey
+                                )
 
                         // Map of ID -> Duration
                         val durationsMap =
@@ -238,7 +242,7 @@ class VideoRepository(private val videoDao: VideoDao) {
                 val response =
                         RetrofitClient.youtubeApi.getSubscriptions(
                                 authHeader = authHeader,
-                                apiKey = apiKey,
+                                apiKey = if (authHeader != null) null else apiKey,
                                 pageToken = nextToken
                         )
                 allSubs.addAll(response.items)
@@ -257,7 +261,11 @@ class VideoRepository(private val videoDao: VideoDao) {
 
                     // Get Uploads Content Details
                     val channelResponse =
-                            RetrofitClient.youtubeApi.getChannels(id = channelId, apiKey = apiKey)
+                            RetrofitClient.youtubeApi.getChannels(
+                                    authHeader = authHeader,
+                                    id = channelId,
+                                    apiKey = if (authHeader != null) null else apiKey
+                            )
                     val uploadsPlaylistId =
                             channelResponse.items.firstOrNull()
                                     ?.contentDetails
@@ -268,7 +276,8 @@ class VideoRepository(private val videoDao: VideoDao) {
                     // Fetch Top 10 from Uploads
                     val uploadsResponse =
                             RetrofitClient.youtubeApi.getPlaylistItems(
-                                    apiKey = apiKey,
+                                    authHeader = authHeader,
+                                    apiKey = if (authHeader != null) null else apiKey,
                                     playlistId = uploadsPlaylistId,
                                     maxResults = 10
                             )
@@ -323,7 +332,11 @@ class VideoRepository(private val videoDao: VideoDao) {
                 try {
                     val ids = batch.joinToString(",") { it.id }
                     val detailsResponse =
-                            RetrofitClient.youtubeApi.getVideos(id = ids, apiKey = apiKey)
+                            RetrofitClient.youtubeApi.getVideos(
+                                    authHeader = authHeader,
+                                    id = ids,
+                                    apiKey = if (authHeader != null) null else apiKey
+                            )
 
                     // Map details back to entities
                     for (candidate in batch) {

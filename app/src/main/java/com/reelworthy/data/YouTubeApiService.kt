@@ -23,9 +23,10 @@ interface YouTubeApiService {
      */
     @GET("videos")
     suspend fun getVideos(
+            @retrofit2.http.Header("Authorization") authHeader: String? = null,
             @Query("part") part: String = "snippet,contentDetails",
             @Query("id") id: String,
-            @Query("key") apiKey: String
+            @Query("key") apiKey: String? = null
     ): YouTubeVideoListResponse
 
     /**
@@ -103,8 +104,9 @@ interface YouTubeApiService {
      */
     @GET("channels")
     suspend fun getChannels(
+            @retrofit2.http.Header("Authorization") authHeader: String? = null,
             @Query("part") part: String = "contentDetails",
             @Query("id") id: String,
-            @Query("key") apiKey: String
+            @Query("key") apiKey: String? = null
     ): com.reelworthy.data.models.YouTubeChannelListResponse
 }

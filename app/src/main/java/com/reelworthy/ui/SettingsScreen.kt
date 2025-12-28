@@ -278,6 +278,47 @@ fun SettingsScreen(viewModel: SettingsViewModel, onClose: () -> Unit) {
                         )
                     }
                 }
+
+                // Section: Actions
+                item {
+                    Column {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                                "Actions",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        FocusableScaleWrapper(
+                                onClick = { viewModel.syncEverything() },
+                                modifier = Modifier.fillMaxWidth()
+                        ) { isFocused ->
+                            Box(
+                                    modifier =
+                                            Modifier.fillMaxWidth()
+                                                    .background(
+                                                            if (isFocused) Color.White
+                                                            else Color(0xFF333333),
+                                                            androidx.compose.foundation.shape
+                                                                    .RoundedCornerShape(12.dp)
+                                                    )
+                            ) {
+                                Row(
+                                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                            "Re-sync Everything",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = if (isFocused) Color.Black else Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             } // End LazyColumn
         } // End Column
 

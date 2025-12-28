@@ -166,6 +166,10 @@ class SettingsViewModel(
      * Fetches top-level playlists for the user from YouTube. Requires a valid Google Sign-In access
      * token.
      */
+    /**
+     * Fetches top-level playlists for the user from YouTube. Requires a valid Google Sign-In access
+     * token.
+     */
     fun fetchPlaylists() {
         viewModelScope.launch {
             try {
@@ -189,6 +193,65 @@ class SettingsViewModel(
                 android.util.Log.e("SettingsViewModel", "Error fetching playlists", e)
                 e.printStackTrace()
                 _isSyncing.value = false
+            }
+        }
+    }
+
+    /**
+     * Re-syncs everything: Models, Playlist definitions, and Video Content (Playlists +
+     * Subscriptions).
+     */
+    fun syncEverything() {
+        viewModelScope.launch {
+            if (_isSyncing.value) return@launch
+
+            _isSyncing.value = true
+            try {
+                // 1. Fetch Models
+                _syncMessage.value = "Updating AI Models..."
+                fetchModels()
+
+                // 2. Refresh Playlist Definitions (List of playlists)
+                // Note: This only updates available playlists in DB; it preserves UserSettings
+                // selections via Repository logic.
+                _syncMessage.value = "Updating Playlists..."
+                val token = authRepository.getAccessToken(getApplication())
+                if (token == null) {
+                    _authError.value = true
+                    _syncMessage.value = "Auth failed. Sign in required."
+                    _isSyncing.value = false
+                    return@launch
+                }
+                _authError.value = false
+                videoRepository.fetchUserPlaylists(token)
+
+                // 3. Sync Content for Selected Playlists
+                val selectedIds = uiState.value.settings.selectedPlaylistIds
+                if (selectedIds.isNotEmpty()) {
+                    _syncMessage.value = "Syncing ${selectedIds.size} playlists..."
+                    selectedIds.forEachIndexed { index, playlistId ->
+                        _syncMessage.value = "Syncing playlist ${index + 1}/${selectedIds.size}..."
+                        videoRepository.fetchPlaylistVideos(playlistId, token, apiKey)
+                    }
+                }
+
+                // 4. Sync Subscriptions (if enabled)
+                if (uiState.value.settings.includeSubscriptionFeed) {
+                    _syncMessage.value = "Syncing subscriptions..."
+                    videoRepository.fetchRecentSubscriptionVideos(token, apiKey)
+                }
+
+                _syncMessage.value = "Sync Complete!"
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "Global Sync Error", e)
+                _syncMessage.value = "Sync failed: ${e.message}"
+            } finally {
+                _isSyncing.value = false
+                // Clear success message after delay
+                kotlinx.coroutines.delay(3000)
+                if (_syncMessage.value == "Sync Complete!") {
+                    _syncMessage.value = null
+                }
             }
         }
     }
