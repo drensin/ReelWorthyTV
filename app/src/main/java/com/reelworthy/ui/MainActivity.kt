@@ -27,7 +27,6 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.firebase.auth.GoogleAuthProvider
 import com.reelworthy.data.AuthRepository
 import kotlinx.coroutines.launch
 
@@ -44,7 +43,7 @@ import kotlinx.coroutines.launch
  */
 class MainActivity : ComponentActivity() {
 
-    private val authRepository = AuthRepository()
+    private val authRepository by lazy { AuthRepository(this) }
 
     // Factory should inject this, but for simple MVP we can construct it if we get the key
     // Actually, we need the API Key from google-services or resources.
@@ -66,26 +65,15 @@ class MainActivity : ComponentActivity() {
                                 "MainActivity",
                                 "Google Sign-In Account: ${account.email}"
                         )
-                        val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                        lifecycleScope.launch {
-                            try {
-                                authRepository.signInWithCredential(credential)
-                                Toast.makeText(
-                                                this@MainActivity,
-                                                "Signed in as ${account.displayName}",
-                                                Toast.LENGTH_SHORT
-                                        )
-                                        .show()
-                            } catch (e: Exception) {
-                                Log.e("MainActivity", "Firebase sign in failed", e)
-                                Toast.makeText(
-                                                this@MainActivity,
-                                                "Auth Failed: ${e.message}",
-                                                Toast.LENGTH_LONG
-                                        )
-                                        .show()
-                            }
-                        }
+                        // Refresh repository state
+                        authRepository.refreshUser(this)
+
+                        Toast.makeText(
+                                        this@MainActivity,
+                                        "Signed in as ${account.displayName}",
+                                        Toast.LENGTH_SHORT
+                                )
+                                .show()
                     } catch (e: Exception) {
                         Log.e("MainActivity", "Google sign in failed", e)
                         Toast.makeText(
@@ -175,8 +163,12 @@ class MainActivity : ComponentActivity() {
                                         onOpenSettings = { showSettings = true },
                                         onSignOut = {
                                             lifecycleScope.launch {
-                                                authRepository.signOut()
-                                                googleSignInClient.signOut()
+                                                authRepository.signOut(googleSignInClient)
+                                                // googleSignInClient.signOut() is handled
+                                                // inside authRepository.signOut now primarily
+                                                // or we redundant call it
+                                                // Actually AuthRepository.signOut takes client
+                                                // now.
                                             }
                                         }
                                 )

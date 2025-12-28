@@ -119,6 +119,7 @@ This package handles all data operations. It is the "Truth".
 *   **`VideoEntity.kt`**: Defines the table structure (columns) for videos.
 *   **`RetrofitClient.kt`**: Configures the connection to YouTube and Gemini.
 *   **`ChatRepository.kt`**: The logic for talking to Gemini using a dedicated Retrofit service (`GeminiService`). It manages manual JSON payload construction, executes the streaming API call, and parses the SSE (Server-Sent Events) response to extract "thinking" and "text" chunks.
+*   **`AuthRepository.kt`**: Manages Google Sign-In and OAuth token retreival. Replaces legacy Firebase authentication with direct Google Identity services.
 *   **`VideoRepository.kt`**: Hides the complexity of data sources. Handles logic parity with the web app (e.g. fetching subscriptions, sorting, filtering Shorts).
 *   **`SearchHistoryRepository.kt`**: Manages the user's search history.
     *   **`SearchHistoryEntity.kt`**: Defines the table for storing queries (timestamped).
@@ -161,6 +162,14 @@ This package handles what the user sees.
     YOUTUBE_API_KEY=your_api_key_here
     ```
 4.  Sync Gradle project. The build system will automatically inject this key into `BuildConfig.YOUTUBE_API_KEY` for use in the app.
+5.  **OAuth Client ID**:
+    *   Create a "Web application" OAuth Client ID in your Google Cloud Console.
+    *   Create `app/src/main/res/values/strings.xml` (if not present) and add the ID:
+        ```xml
+        <resources>
+            <string name="default_web_client_id">YOUR_CLIENT_ID_HERE</string>
+        </resources>
+        ```
 
 ### Running the App
 1.  Create an **Android TV Emulator** (e.g., 1080p Android 11+).

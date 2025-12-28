@@ -4,7 +4,7 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
+    // id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
 }
 
@@ -103,8 +103,9 @@ dependencies {
     // implementation("com.google.genai:google-genai:0.2.0")
 
     // Firebase (BoM)
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    implementation("com.google.firebase:firebase-auth")
+    // Firebase (BoM) - REMOVED
+    // implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    // implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     
     // DataStore

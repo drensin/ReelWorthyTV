@@ -46,7 +46,7 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) :
             // Initialize dependencies
             val database = AppDatabase.getDatabase(context)
             val settingsRepo = SettingsRepository(context)
-            val authRepo = AuthRepository()
+            val authRepo = AuthRepository(context)
             val videoRepo = VideoRepository(database.videoDao())
 
             // 1. Get Access Token
